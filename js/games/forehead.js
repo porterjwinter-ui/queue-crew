@@ -285,10 +285,12 @@ export default {
         if (ok) { scores[name] += 1; scoreEl.textContent = String(scores[name]); sfx.good(); buzz(60); }
         else { sfx.pass(); buzz([20, 40, 20]); }
         stage.classList.add(ok ? 'yes' : 'no');
+        scr.classList.add(ok ? 'yes' : 'no'); // the whole screen, edges included
         fb.replaceChildren(ic(ok ? 'check' : 'arrow-forward-up'));
         current = null;
         setTimeout(() => {
           stage.classList.remove('yes', 'no');
+          scr.classList.remove('yes', 'no');
           fb.replaceChildren();
           busy = false;
           if (t && !t.done) nextWord();
@@ -310,6 +312,7 @@ export default {
         closeOverlay();
         sfx.buzzer(); buzz([100, 60, 200]);
         stage.classList.add('over');
+        scr.classList.add('over');
         wordEl.textContent = 'Time!';
         fitWord();
         setTimeout(() => recap(name, record), 1300);

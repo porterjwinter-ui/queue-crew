@@ -259,7 +259,11 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
 .fh-place-text { font-size: 34px; font-weight: 900; }
 .fh-place-sub { font-size: 20px; font-weight: 800; opacity: .6; }
 
-.fh-play { position: fixed; inset: 0; background: var(--c); color: #fff; overflow: hidden; touch-action: none; }
+.fh-play { position: fixed; inset: 0; background: var(--c); color: #fff; overflow: hidden; touch-action: none; transition: background-color .15s; }
+/* The edges outside the game area change color with it, so no red strip is left over. */
+.fh-play.yes { background: #20bf6b; }
+.fh-play.no { background: #ff9f1c; }
+.fh-play.over { background: #1d1530; }
 .fh-safe { position: absolute; pointer-events: none; top: 0; right: 0; bottom: 0; left: 0;
   top: env(safe-area-inset-top, 0px); right: env(safe-area-inset-right, 0px); bottom: env(safe-area-inset-bottom, 0px); left: env(safe-area-inset-left, 0px); }
 .fh-stage { position: absolute; left: 50%; top: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: background-color .15s; background: var(--c); }

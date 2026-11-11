@@ -44,7 +44,7 @@ To add words, edit `data/words.json` (put them in `e`, `m` or `h` for difficulty
 Tap the **Queue Crew** logo on the home screen 7 times to open the hidden developer menu.
 
 1. Paste your [OpenRouter](https://openrouter.ai/keys) key. It is saved only on that phone and sent only to openrouter.ai. It is never in this code or on GitHub.
-2. Pick a model (Claude Fable 5.2 by default; Sonnet 5.5 and Haiku 5.5 cost less).
+2. Pick a model. The default is Google's Gemini 3.8 Flash (fast and cheap). Search the box to pick any other OpenRouter model by name or id.
 3. Turn on **Developer mode**.
 
 While developer mode is on:

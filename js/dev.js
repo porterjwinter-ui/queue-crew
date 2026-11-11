@@ -4,7 +4,7 @@
 // and cards whenever they're about to repeat. With developer mode off, none of that is used.
 import { h, view, btn, mount, ic, confirmBox, enable } from './core/ui.js';
 import { store } from './core/store.js';
-import { MODELS, KINDS, getKey, setKey, getModel, setModel, generate, getLog } from './core/ai.js';
+import { KINDS, getKey, setKey, getModelInfo, setModelInfo, cachedModels, loadModels, generate, getLog } from './core/ai.js';
 import { extraCounts, clearExtras } from './core/db.js';
 
 const COLOR = '#4b6584';
@@ -33,9 +33,7 @@ export function devMenu(home) {
     status.textContent = keyInput.value.trim() ? 'Key saved.' : 'Key removed.';
   });
 
-  const model = h('select', { class: 'big-select', 'aria-label': 'Model' },
-    MODELS.map((m) => h('option', { value: m.id, selected: m.id === getModel() ? true : null }, m.label)));
-  model.addEventListener('change', () => setModel(model.value));
+  const model = modelPicker();
 
   const kind = h('select', { class: 'big-select', 'aria-label': 'What to make' },
     KINDS.map((k) => h('option', { value: k.id }, k.label)));
@@ -92,13 +90,58 @@ export function devMenu(home) {
         h('div', { class: 'dev-row' }, h('span', null, 'AI keeps every game stocked'), sw),
         h('p', { class: 'dev-note' }, 'Forehead gets a New deck card, and games write more words and questions before they repeat.')),
       section('OpenRouter key', keyInput, h('p', { class: 'dev-note' }, 'Saved only on this phone. Sent only to openrouter.ai.')),
-      section('Model', model),
+      section('Model', model.el),
       section('Make more now', kind, status, made),
       section('Made by AI', counts, logEl)),
     actions: [remove, gen],
   }));
   showCounts();
 }
+
+// Search box over every OpenRouter model. Type part of a name or id ("flash", "claude", "llama").
+function modelPicker() {
+  let models = cachedModels();
+  const current = h('div', { class: 'model-current' });
+  const search = h('input', {
+    class: 'big-input', type: 'search', placeholder: 'Search models', autocomplete: 'off',
+    autocapitalize: 'none', spellcheck: 'false', 'aria-label': 'Search models', enterkeyhint: 'search',
+  });
+  const list = h('div', { class: 'model-list', role: 'listbox', 'aria-label': 'Models' });
+  const note = h('p', { class: 'dev-note' });
+
+  const price = (m) => (m.in || m.out ? `$${fmt(m.in)} in / $${fmt(m.out)} out per 1M tokens` : 'Free');
+  const showCurrent = () => {
+    const m = getModelInfo();
+    current.replaceChildren(h('b', null, m.name), h('span', null, m.id), h('span', null, price(m)));
+  };
+
+  const render = () => {
+    const q = search.value.trim().toLowerCase();
+    const terms = q.split(/\s+/).filter(Boolean);
+    const sel = getModelInfo().id;
+    let hits = terms.length ? models.filter((m) => terms.every((t) => `${m.name} ${m.id}`.toLowerCase().includes(t))) : models;
+    const shown = hits.slice(0, 40);
+    const rows = shown.map((m) => h('button', {
+      class: `model-row ${m.id === sel ? 'on' : ''}`, role: 'option', 'aria-selected': String(m.id === sel),
+      onclick: () => { setModelInfo(m); showCurrent(); render(); },
+    }, h('b', null, m.name), h('span', null, m.id), h('span', null, price(m))));
+    // Not in the list (or offline)? Typing an exact model id still works.
+    if (!hits.some((m) => m.id === q) && /^[a-z0-9~][\w.-]*\/[\w.:~-]+$/i.test(q)) {
+      rows.push(h('button', { class: 'model-row', onclick: () => { setModelInfo({ id: q, name: q, params: [] }); showCurrent(); render(); } },
+        h('b', null, `Use "${q}"`), h('span', null, 'Model id typed by hand')));
+    }
+    list.replaceChildren(...(rows.length ? rows : [h('div', { class: 'model-empty' }, 'No models match.')]));
+    note.textContent = terms.length ? `${hits.length} match${hits.length === 1 ? '' : 'es'}` : `${models.length} models`;
+  };
+
+  search.addEventListener('input', render);
+  showCurrent();
+  render();
+  loadModels().then((m) => { models = m; render(); }).catch(() => { note.textContent = `${models.length} saved models (no connection)`; });
+  return { el: h('div', { class: 'model-picker' }, current, search, list, note) };
+}
+
+function fmt(n) { return n >= 10 ? String(Math.round(n)) : String(Number(n.toFixed(2))); }
 
 function ago(t) {
   const m = Math.round((Date.now() - t) / 60000);

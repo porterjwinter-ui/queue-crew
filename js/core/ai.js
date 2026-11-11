@@ -7,16 +7,50 @@ import { aiContext, addExtras, onRunningLow } from './db.js';
 import { shuffle } from './rng.js';
 import { normalize, containsWord } from './text.js';
 
-export const MODELS = [
-  { id: 'anthropic/claude-fable-5.2', label: 'Claude Fable 5.2 (best)' },
-  { id: 'anthropic/claude-sonnet-5.5', label: 'Claude Sonnet 5.5 (cheaper)' },
-  { id: 'anthropic/claude-haiku-5.5', label: 'Claude Haiku 5.5 (cheapest)' },
+// Default: Google's current Gemini Flash. Any OpenRouter model can be picked in the developer menu.
+export const DEFAULT_MODEL = {
+  id: 'google/gemini-3.8-flash', name: 'Google: Gemini 3.8 Flash', in: 0.83, out: 4.12,
+  params: ['max_tokens', 'temperature', 'reasoning', 'response_format', 'structured_outputs'],
+};
+// Used only if the model list has never loaded (first open with no signal).
+const FALLBACK_MODELS = [
+  DEFAULT_MODEL,
+  { id: 'google/gemini-3.5-flash-lite', name: 'Google: Gemini 3.5 Flash Lite', in: 0.3, out: 2.5, params: DEFAULT_MODEL.params },
+  { id: 'anthropic/claude-sonnet-5.5', name: 'Anthropic: Claude Sonnet 5.5', in: 2, out: 10, params: ['max_tokens', 'temperature', 'reasoning'] },
+  { id: 'anthropic/claude-haiku-5.5', name: 'Anthropic: Claude Haiku 5.5', in: 0.1, out: 0.5, params: ['max_tokens', 'temperature', 'reasoning'] },
 ];
 
 export const getKey = () => store.get('dev.key', '');
 export function setKey(k) { if (k) store.set('dev.key', k); else store.del('dev.key'); }
-export const getModel = () => store.get('dev.model', MODELS[0].id);
-export const setModel = (m) => store.set('dev.model', m);
+export const getModelInfo = () => store.get('dev.model2', null) || DEFAULT_MODEL;
+export const getModel = () => getModelInfo().id;
+export const setModelInfo = (m) => store.set('dev.model2', { id: m.id, name: m.name, in: m.in, out: m.out, params: m.params || [] });
+
+// OpenRouter's public model list (no key needed). Cached so the picker works offline too.
+export function cachedModels() {
+  const c = store.get('dev.models', null);
+  return c && Array.isArray(c.list) && c.list.length ? c.list : FALLBACK_MODELS;
+}
+export async function loadModels() {
+  const c = store.get('dev.models', null);
+  if (c && Date.now() - c.t < 12 * 60 * 60 * 1000 && c.list.length) return c.list;
+  const res = await fetch('https://openrouter.ai/api/v1/models');
+  if (!res.ok) throw new Error('models ' + res.status);
+  const data = await res.json();
+  const list = (data.data || [])
+    .filter((m) => !String(m.id).endsWith(':batch'))
+    .filter((m) => !m.architecture || !m.architecture.output_modalities || m.architecture.output_modalities.includes('text'))
+    .sort((a, b) => (b.created || 0) - (a.created || 0))
+    .map((m) => ({
+      id: m.id,
+      name: String(m.name || m.id).replace(/\p{Extended_Pictographic}|\uFE0F|\u200D/gu, '').trim() || m.id, // no emoji in the app
+      in: Math.round(Number((m.pricing && m.pricing.prompt) || 0) * 1e8) / 100,
+      out: Math.round(Number((m.pricing && m.pricing.completion) || 0) * 1e8) / 100,
+      params: (m.supported_parameters || []).filter((p) => ['max_tokens', 'temperature', 'reasoning', 'response_format'].includes(p)),
+    }));
+  store.set('dev.models', { t: Date.now(), list });
+  return list;
+}
 
 export class AIError extends Error {}
 
@@ -28,6 +62,22 @@ Rules for everything you write:
 - Only plain letters, numbers and normal punctuation. No emoji.
 - Never repeat or lightly reword anything in the lists you are given.
 - Reply with one JSON object only. No other text.`;
+
+// Only send options the chosen model supports (from OpenRouter's model list).
+function requestBody(prompt, maxTokens) {
+  const info = getModelInfo();
+  const has = (p) => !info.params || !info.params.length || info.params.includes(p);
+  const body = {
+    model: info.id,
+    max_tokens: maxTokens,
+    messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: prompt }],
+  };
+  if (has('temperature')) body.temperature = 0.9;
+  // Thinking models (like Gemini Flash): keep thinking short so the answer isn't cut off.
+  if (info.params && info.params.includes('reasoning')) { body.reasoning = { effort: 'low', exclude: true }; body.max_tokens = maxTokens + 2000; }
+  if (info.params && info.params.includes('response_format')) body.response_format = { type: 'json_object' };
+  return body;
+}
 
 async function ask(prompt, maxTokens = 3000) {
   const key = getKey();
@@ -45,12 +95,7 @@ async function ask(prompt, maxTokens = 3000) {
         'HTTP-Referer': location.origin + location.pathname,
         'X-Title': 'Queue Crew',
       },
-      body: JSON.stringify({
-        model: getModel(),
-        max_tokens: maxTokens,
-        temperature: 0.9,
-        messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: prompt }],
-      }),
+      body: JSON.stringify(requestBody(prompt, maxTokens)),
     });
   } catch (e) {
     throw new AIError(e.name === 'AbortError' ? 'That took too long. Try again.' : 'No connection. Try again with signal.');

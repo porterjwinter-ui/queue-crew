@@ -1,5 +1,5 @@
 // Hot Potato: say a word, pass the phone. A hidden fuse goes off — whoever holds it gets a strike.
-import { h, view, btn, mount, nameTag, pauseMenu, setBack, keepAwake, onCleanup, closeOverlay, flash, ic } from '../core/ui.js';
+import { h, view, btn, mount, nameTag, avatar, pauseMenu, setBack, keepAwake, onCleanup, closeOverlay, flash, ic } from '../core/ui.js';
 import { hotWordStream, letterChunk } from '../core/db.js';
 import { randInt } from '../core/rng.js';
 import { timer, onHidden } from '../core/timer.js';
@@ -46,7 +46,7 @@ const tut = {
   `,
   steps: [
     { c: 'Pass the phone around', t: 2600 },
-    { c: 'Say a word, then pass it', t: 2800 },
+    { c: 'Your turn done? Pass it on', t: 2800 },
     { c: 'It gets hotter and hotter', t: 2400 },
     { c: 'Holding it at BOOM? That\'s a strike', t: 2600 },
   ],
@@ -87,7 +87,7 @@ export default {
           chunk ? chunkView(chunk) : h('div', { class: 'hp-big-ico' }, ic('flame')),
           h('div', { class: 'hp-first' }, nameTag(P[holder]), h('span', null, ' starts')),
           scoreStrip(strikes, Object.fromEntries([...out].map((p) => [p, 'x'])))),
-        actions: [btn('Light it', () => play(chunk), { icon: 'flame' })],
+        actions: [btn(`I'm ${P[holder]}`, () => play(chunk), { icon: 'flame' })],
       }));
     }
 
@@ -109,15 +109,30 @@ export default {
       const potato = h('div', { class: 'hp-potato', html: `<svg viewBox="-27 -22 54 44">${potatoSvg('hp')}</svg>` });
       const who = h('div', { class: 'hp-who' });
       const word = h('div', { class: 'hp-word' });
+      const todo = h('div', { class: 'hp-todo' }, letters ? 'Say a word with these letters' : 'Describe it');
       const setWho = () => { who.replaceChildren(nameTag(P[holder])); };
       const newWord = () => { if (words) word.textContent = words.next().w; };
+      // Describe mode: after a pass, the next word stays hidden until the new holder taps their name.
+      let covered = false;
+      // Same layout as every other pass-the-phone screen: who in the middle, button at the bottom.
+      const coverWho = h('div', { class: 'hp-cover-who' });
+      const coverAct = h('footer', { class: 'actions n1' });
+      const cover = h('div', { class: 'hp-cover' }, coverWho, coverAct);
+      cover.hidden = true;
+      const showCover = () => {
+        const name = P[holder];
+        covered = true;
+        coverWho.replaceChildren(h('div', { class: 'hp-cover-label' }, 'Pass to'), avatar(name, 'xl'), h('div', { class: 'pass-name' }, name));
+        coverAct.replaceChildren(btn(`I'm ${name}`, () => { covered = false; cover.hidden = true; newWord(); }, { icon: 'hand-stop' }));
+        cover.hidden = false;
+      };
 
       const passBtn = btn(letters ? 'Said one!' : 'Got it', () => pass(), { icon: 'check', silent: true });
-      const skipBtn = letters ? null : btn('Skip', () => { newWord(); sfx.pass(); }, { kind: 'ghost', icon: 'arrow-forward-up' });
+      const skipBtn = letters ? null : btn('Skip', () => { if (!covered) { newWord(); sfx.pass(); } }, { kind: 'ghost', icon: 'arrow-forward-up' });
 
       const scr = view({
         color: ctx.color, cls: 'hp-play',
-        body: h('div', { class: 'hp-stage' }, potato, who, letters ? chunkView(chunk) : word),
+        body: h('div', { class: 'hp-stage' }, potato, who, todo, letters ? chunkView(chunk) : word, cover),
         actions: [skipBtn, passBtn],
       });
       setBack(() => doPause());
@@ -146,11 +161,14 @@ export default {
       tick();
 
       function pass() {
-        if (paused || t.done) return;
+        if (paused || covered || t.done) return;
         holder = nextIdx(holder);
         sfx.whoosh(); buzz(25);
         potato.classList.remove('fly'); void potato.offsetWidth; potato.classList.add('fly');
-        setWho(); newWord();
+        setWho();
+        if (letters) return; // the letters are the same for everyone, nothing to hide
+        word.textContent = '';
+        showCover();
       }
 
       function doPause() {

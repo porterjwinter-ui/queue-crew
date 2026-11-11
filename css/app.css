@@ -340,6 +340,14 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
 @keyframes hpFly { 0% { transform: translateX(0) scale(1); } 40% { transform: translateX(60vw) rotate(40deg) scale(.6); } 41% { transform: translateX(-60vw) rotate(-40deg) scale(.6); } 100% { transform: none; } }
 .hp-word { font-size: 42px; font-weight: 900; text-align: center; line-height: 1.05; background: var(--card); border-radius: 24px; padding: 14px 22px; box-shadow: 0 6px 0 var(--shadow); }
 .hp-big-ico { font-size: 110px; color: var(--c); }
+.hp-todo { font-weight: 800; font-size: 18px; opacity: .6; margin-bottom: -6px; }
+/* Covers the screen while the phone is passed, so nobody sees the next person's word. */
+.hp-cover { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: linear-gradient(180deg, var(--c3) 0%, var(--c4) 46%); }
+.hp-cover[hidden] { display: none; }
+.hp-cover-label { font-weight: 900; font-size: 22px; opacity: .6; }
+.hp-cover-who { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
 .hp-first { display: flex; align-items: center; gap: 6px; font-weight: 900; font-size: 22px; }
 .chunk { display: flex; align-items: baseline; justify-content: center; gap: 4px; font-weight: 900; font-size: 64px; flex-wrap: wrap; }
 .chunk b { background: var(--c); color: var(--on); padding: 2px 20px; border-radius: 20px; box-shadow: 0 6px 0 var(--c2); letter-spacing: 2px; }

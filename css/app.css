@@ -334,20 +334,23 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
 .hp-stage { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .hp-potato { width: min(60vw, 270px); animation: hpWob .35s ease-in-out infinite alternate; }
 .hp-potato svg { width: 100%; display: block; overflow: visible; transition: transform .08s; }
-.hp-potato.tk svg { transform: scale(1.05); }
+.hp-potato.flash svg { transform: scale(1.07); filter: brightness(1.3) drop-shadow(0 0 calc(6px + var(--heat, 0) * 22px) rgba(255, 60, 20, calc(.35 + var(--heat, 0) * .6))); }
+.hp-potato svg { transition: transform .08s, filter .08s; }
 .hp-potato.fly { animation: hpFly .45s ease-out; }
 @keyframes hpWob { from { transform: rotate(calc(var(--heat, 0) * -10deg)); } to { transform: rotate(calc(var(--heat, 0) * 10deg)) translateY(calc(var(--heat, 0) * -6px)); } }
 @keyframes hpFly { 0% { transform: translateX(0) scale(1); } 40% { transform: translateX(60vw) rotate(40deg) scale(.6); } 41% { transform: translateX(-60vw) rotate(-40deg) scale(.6); } 100% { transform: none; } }
 .hp-word { font-size: 42px; font-weight: 900; text-align: center; line-height: 1.05; background: var(--card); border-radius: 24px; padding: 14px 22px; box-shadow: 0 6px 0 var(--shadow); }
 .hp-big-ico { font-size: 110px; color: var(--c); }
 .hp-todo { font-weight: 800; font-size: 18px; opacity: .6; margin-bottom: -6px; }
-/* Covers the screen while the phone is passed, so nobody sees the next person's word. */
-.hp-cover { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  background: linear-gradient(180deg, var(--c3) 0%, var(--c4) 46%); }
-.hp-cover[hidden] { display: none; }
-.hp-cover-label { font-weight: 900; font-size: 22px; opacity: .6; }
-.hp-cover-who { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+/* Passing the phone: the word is covered by a tap-to-see button; everything else keeps going. */
+.hp-slot { width: 100%; display: flex; justify-content: center; }
+.hp-reveal { border: 0; background: var(--c); color: var(--on); border-radius: 24px; box-shadow: 0 6px 0 var(--c2); padding: 18px 28px; font-weight: 900; font-size: 28px; display: inline-flex; align-items: center; gap: 12px; }
+.hp-reveal .ic { font-size: 32px; }
+.hp-reveal:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--c2); }
+.hp-passto { font-weight: 800; opacity: .6; margin-right: 8px; }
+.hp-who { display: flex; align-items: center; justify-content: center; }
+.hp-play.passing .hp-todo { visibility: hidden; }
+.hp-play.passing .actions { visibility: hidden; } /* no Skip / Got it until the new holder has it */
 .hp-first { display: flex; align-items: center; gap: 6px; font-weight: 900; font-size: 22px; }
 .chunk { display: flex; align-items: baseline; justify-content: center; gap: 4px; font-weight: 900; font-size: 64px; flex-wrap: wrap; }
 .chunk b { background: var(--c); color: var(--on); padding: 2px 20px; border-radius: 20px; box-shadow: 0 6px 0 var(--c2); letter-spacing: 2px; }

@@ -1,5 +1,5 @@
 // Hot Potato: say a word, pass the phone. A hidden fuse goes off — whoever holds it gets a strike.
-import { h, view, btn, mount, nameTag, avatar, pauseMenu, setBack, keepAwake, onCleanup, closeOverlay, flash, ic } from '../core/ui.js';
+import { h, view, btn, mount, nameTag, pauseMenu, setBack, keepAwake, onCleanup, closeOverlay, flash, ic } from '../core/ui.js';
 import { hotWordStream, letterChunk } from '../core/db.js';
 import { randInt } from '../core/rng.js';
 import { timer, onHidden } from '../core/timer.js';
@@ -112,19 +112,26 @@ export default {
       const todo = h('div', { class: 'hp-todo' }, letters ? 'Say a word with these letters' : 'Describe it');
       const setWho = () => { who.replaceChildren(nameTag(P[holder])); };
       const newWord = () => { if (words) word.textContent = words.next().w; };
-      // Describe mode: after a pass, the next word stays hidden until the new holder taps their name.
+      // Describe mode: while the phone is passed, only the word is covered. The potato stays on
+      // screen, heating up, flashing and ticking, and the new holder taps their name to see the word.
       let covered = false;
-      // Same layout as every other pass-the-phone screen: who in the middle, button at the bottom.
-      const coverWho = h('div', { class: 'hp-cover-who' });
-      const coverAct = h('footer', { class: 'actions n1' });
-      const cover = h('div', { class: 'hp-cover' }, coverWho, coverAct);
-      cover.hidden = true;
+      const slot = h('div', { class: 'hp-slot' }, word);
       const showCover = () => {
         const name = P[holder];
         covered = true;
-        coverWho.replaceChildren(h('div', { class: 'hp-cover-label' }, 'Pass to'), avatar(name, 'xl'), h('div', { class: 'pass-name' }, name));
-        coverAct.replaceChildren(btn(`I'm ${name}`, () => { covered = false; cover.hidden = true; newWord(); }, { icon: 'hand-stop' }));
-        cover.hidden = false;
+        scr.classList.add('passing');
+        who.replaceChildren(h('span', { class: 'hp-passto' }, 'Pass to'), nameTag(name));
+        slot.replaceChildren(h('button', {
+          class: 'hp-reveal', type: 'button',
+          onclick: () => {
+            if (paused || t.done) return;
+            sfx.tap(); buzz(10);
+            covered = false;
+            scr.classList.remove('passing');
+            setWho(); newWord();
+            slot.replaceChildren(word);
+          },
+        }, ic('hand-stop'), h('span', null, `I'm ${name}`)));
       };
 
       const passBtn = btn(letters ? 'Said one!' : 'Got it', () => pass(), { icon: 'check', silent: true });
@@ -132,7 +139,7 @@ export default {
 
       const scr = view({
         color: ctx.color, cls: 'hp-play',
-        body: h('div', { class: 'hp-stage' }, potato, who, todo, letters ? chunkView(chunk) : word, cover),
+        body: h('div', { class: 'hp-stage' }, potato, who, todo, letters ? chunkView(chunk) : slot),
         actions: [skipBtn, passBtn],
       });
       setBack(() => doPause());
@@ -155,7 +162,12 @@ export default {
 
       const tick = () => {
         if (t.done) return;
-        if (!paused) { sfx.tick(heat > 0.7); potato.classList.toggle('tk'); }
+        if (!paused) {
+          sfx.tick(heat > 0.7);
+          // Flash on every tick; ticks speed up as the fuse burns down.
+          potato.classList.add('flash');
+          setTimeout(() => potato.classList.remove('flash'), 110);
+        }
         tickTimer = setTimeout(tick, 620 - 500 * Math.pow(heat, 1.3));
       };
       tick();
@@ -165,9 +177,7 @@ export default {
         holder = nextIdx(holder);
         sfx.whoosh(); buzz(25);
         potato.classList.remove('fly'); void potato.offsetWidth; potato.classList.add('fly');
-        setWho();
-        if (letters) return; // the letters are the same for everyone, nothing to hide
-        word.textContent = '';
+        if (letters) { setWho(); return; } // the letters are the same for everyone, nothing to hide
         showCover();
       }
 

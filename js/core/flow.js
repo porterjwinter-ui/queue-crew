@@ -47,9 +47,9 @@ export function carousel(items, render, onPick, { start = 0, onChange } = {}) {
     cards.forEach((c, i) => c.classList.toggle('on', i === current));
     [...dots.children].forEach((d, i) => d.classList.toggle('on', i === current));
   }
-  let raf = 0;
-  track.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(update); }, { passive: true });
-  requestAnimationFrame(() => { scrollToCard(start, false); update(); });
+  let timer = 0;
+  track.addEventListener('scroll', () => { clearTimeout(timer); timer = setTimeout(update, 40); }, { passive: true });
+  setTimeout(() => { scrollToCard(start, false); update(); }, 0);
   wrap.go = (d) => scrollToCard(Math.max(0, Math.min(items.length - 1, current + d)), true);
   return wrap;
 }

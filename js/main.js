@@ -1,8 +1,10 @@
 // Queue Crew — app shell: home carousel, how-to-play intros, players, scoreboard.
-import { h, view, btn, mount, initUI, avatar, confirmBox, themeVars, enable, onCleanup, ic, stars } from './core/ui.js';
+import { h, view, btn, mount, initUI, avatar, confirmBox, themeVars, enable, onCleanup, ic, stars, toast } from './core/ui.js';
 import { loadDB } from './core/db.js';
 import { unlockAudio, sfx, soundOn, setSound } from './core/sound.js';
-import { store, getPlayers, setPlayers, getLevel, setLevel, getTickets, resetTickets } from './core/store.js';
+import { store, getPlayers, setPlayers, getLevel, setLevel, getTickets, resetTickets, devOn } from './core/store.js';
+import { startAutoRefill } from './core/ai.js';
+import { devMenu } from './dev.js';
 import { tutorial } from './core/tutorial.js';
 import { carousel } from './core/flow.js';
 
@@ -48,9 +50,18 @@ function home() {
     return card;
   }, (g) => intro(g), { start, onChange: (i) => { current = i; playBtn.style.setProperty('--c', GAMES[i].color); playBtn.style.setProperty('--c2', themeVars(GAMES[i].color)['--c2']); playBtn.style.setProperty('--on', themeVars(GAMES[i].color)['--on']); } });
   const playBtn = btn('Play', () => intro(GAMES[current]), { icon: 'player-play' });
+  // Tap the logo 7 times to open the hidden developer menu.
+  let taps = 0, lastTap = 0;
+  const logo = h('span', { class: 'logo', onclick: () => {
+    const now = Date.now();
+    taps = now - lastTap < 1500 ? taps + 1 : 1;
+    lastTap = now;
+    if (taps >= 7) { taps = 0; devMenu(home); }
+    else if (taps >= 4) toast(`${7 - taps} more`);
+  } }, h('span', { class: 'logo-q' }, 'Q'), 'ueue Crew', devOn() ? h('span', { class: 'dev-badge' }, 'DEV') : null);
   const v = view({
     color: APP_COLOR, left: sound, right: trophy,
-    title: h('span', { class: 'logo' }, h('span', { class: 'logo-q' }, 'Q'), 'ueue Crew'),
+    title: logo,
     body: h('div', { class: 'home' }, waitChip, car),
     actions: [playBtn],
     cls: 'home-view',
@@ -181,8 +192,12 @@ async function boot() {
     mount(view({ color: APP_COLOR, title: 'Queue Crew', body: h('div', { class: 'huge-ico' }, ic('wifi-off')), actions: [btn('Retry', () => location.reload(), { icon: 'refresh' })] }));
     return;
   }
+  if (devOn()) startAutoRefill();
   home();
   document.getElementById('splash')?.remove();
+  try {
+    if (sessionStorage.getItem('qc.reopenDev')) { sessionStorage.removeItem('qc.reopenDev'); devMenu(home); }
+  } catch { /* ignore */ }
   // Test hook: jump straight to a game's intro (used by tools/test-harness.js).
   window.__qc = { intro: (id) => intro(GAMES.find((g) => g.id === id)), home };
   if ('serviceWorker' in navigator && location.protocol === 'https:') {

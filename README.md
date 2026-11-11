@@ -39,6 +39,22 @@ Every game opens with an animated how-to-play. Games hand out **tickets** to an 
 
 To add words, edit `data/words.json` (put them in `e`, `m` or `h` for difficulty) — you can do this right on github.com in the browser. Phones pick up the change by themselves the next time they open the app with signal (it shows the saved copy first, then refreshes it in the background).
 
+## Developer mode (AI)
+
+Tap the **Queue Crew** logo on the home screen 7 times to open the hidden developer menu.
+
+1. Paste your [OpenRouter](https://openrouter.ai/keys) key. It is saved only on that phone and sent only to openrouter.ai. It is never in this code or on GitHub.
+2. Pick a model (Claude Fable 5.2 by default; Sonnet 5.5 and Haiku 5.5 cost less).
+3. Turn on **Developer mode**.
+
+While developer mode is on:
+
+- Forehead's first card is **New deck**. Each tap has the AI invent a whole new themed deck, so the decks never run out.
+- When any game is close to repeating its words, questions, scales or cards, the app quietly asks the AI for more in the background (one request at a time, at most once a minute per kind).
+- **Make more now** writes a batch on demand.
+
+Everything the AI writes is checked before it's used: right format, no repeats, plain letters only (no emoji), and a filter for words that aren't family-friendly. Turn developer mode off and the app goes back to the built-in word list only. **Remove AI** deletes everything the AI made.
+
 ## Tilt (Forehead)
 
 The phone's motion sensor is turned into an "up" direction, so it works whether the phone is held sideways or upright, and with rotation lock on or off (the word is turned to face the watchers either way). On iPhone, Safari asks for motion permission the first time you tap **Ready**; this only works over `https://`. If there is no sensor, or permission is refused, tap the right half of the screen for "got it" and the left half for "skip".
@@ -54,7 +70,8 @@ All icons are from [Tabler Icons](https://tabler.io/icons) (MIT License). `js/co
 ## Files
 
 - `index.html`, `css/app.css`, `js/main.js` — app shell (home carousel, intros, players, tickets)
-- `js/core/` — shared engine: UI helpers, icons, sound (synthesized, no audio files), timers, tilt, word database, text matching, tutorials
+- `js/core/` — shared engine: UI helpers, icons, sound (synthesized, no audio files), timers, tilt, word database, text matching, tutorials, AI (`ai.js`)
+- `js/dev.js` — the hidden developer menu
 - `js/games/` — one file per game, each with its own animated tutorial
 - `sw.js` — offline cache (saves what the app loads, refreshes it in the background)
-- `tools/test-harness.js` — drives the app from the browser console for testing
+- `tools/test-harness.js`, `tools/mock-ai.js` — drive the app (and fake the AI) from the browser console for testing

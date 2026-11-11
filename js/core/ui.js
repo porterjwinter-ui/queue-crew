@@ -189,6 +189,14 @@ export function pop(text, { x = 50, y = 40, color = '#fff' } = {}) {
   setTimeout(() => p.remove(), 1000);
 }
 
+// Small message at the bottom of the screen.
+export function toast(text, ms = 1400) {
+  document.querySelectorAll('.toast').forEach((t) => t.remove());
+  const t = h('div', { class: 'toast' }, text);
+  document.body.append(t);
+  setTimeout(() => t.remove(), ms);
+}
+
 export function flash(color) {
   const f = h('div', { class: 'flashfx', style: { background: color } });
   document.body.append(f);

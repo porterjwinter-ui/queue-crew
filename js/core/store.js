@@ -24,6 +24,9 @@ export function today() {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
+// ----- Developer mode: on only when switched on in the hidden menu AND a key is saved -----
+export const devOn = () => !!store.get('dev.on', false) && !!store.get('dev.key', '');
+
 // ----- Players & level -----
 export function getPlayers() { return store.get('players', []); }
 export function setPlayers(p) { store.set('players', p); }

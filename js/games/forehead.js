@@ -1,6 +1,8 @@
 // Forehead: phone on your head, friends give clues, nod down = got it, tilt up = skip.
 import { h, view, btn, mount, fitText, pauseMenu, keepAwake, onCleanup, setBack, sleep, closeOverlay, ic } from '../core/ui.js';
 import { decks, deckStream } from '../core/db.js';
+import { devOn } from '../core/store.js';
+import { newDeck } from '../core/ai.js';
 import { requestMotion, watchUp, tiltDetector, screenFix, isUpright } from '../core/tilt.js';
 import { timer, onHidden } from '../core/timer.js';
 import { sfx, buzz } from '../core/sound.js';
@@ -84,15 +86,40 @@ export default {
     pickDeck();
 
     function pickDeck() {
-      const list = decks();
+      // Developer mode: the first card invents a brand-new deck every time.
+      const list = (devOn() ? [{ id: 'new', name: 'New deck', icon: 'sparkles', isNew: true }] : []).concat(decks());
       mount(view({
         color: ctx.color, back: ctx.exit, title: 'Pick a deck',
-        body: carousel(list, (d) => h('div', { class: 'dcard' },
+        body: carousel(list, (d) => h('div', { class: `dcard ${d.isNew ? 'new' : ''}` },
           h('div', { class: 'deck-ico' }, ic(d.icon)),
           h('div', { class: 'deck-name' }, d.name),
+          d.isNew ? h('div', { class: 'deck-hint' }, 'Made by AI') : null,
+          d.ai ? h('span', { class: 'deck-ai' }, ic('sparkles')) : null,
           d.act ? h('div', { class: 'deck-hint' }, ic(d.id === 'sounds' ? 'volume' : 'run'), d.id === 'sounds' ? 'sound it' : 'act it') : null,
-        ), (d) => { deck = d; words = deckStream(d.id, ctx.level); nextTurn(); }),
+        ), (d) => (d.isNew ? makeDeck() : useDeck(d)), { start: devOn() ? 1 : 0 }),
       }));
+    }
+
+    function useDeck(d) { deck = d; words = deckStream(d.id, ctx.level); nextTurn(); }
+
+    async function makeDeck() {
+      const msg = h('div', { class: 'fh-place-sub' }, 'Inventing a new deck');
+      mount(view({
+        color: ctx.color, back: pickDeck, title: 'New deck',
+        body: h('div', { class: 'fh-place' }, h('div', { class: 'huge-ico spin' }, ic('sparkles')), msg),
+      }));
+      try {
+        const made = await newDeck((t) => { msg.textContent = t.replace(/…$/, ''); });
+        if (!msg.isConnected) return; // they backed out while waiting
+        useDeck({ id: made.id, name: made.name, icon: made.icon, ai: true });
+      } catch (e) {
+        if (!msg.isConnected) return;
+        mount(view({
+          color: ctx.color, back: pickDeck, title: 'New deck',
+          body: h('div', { class: 'fh-place' }, h('div', { class: 'huge-ico' }, ic('cloud-off')), h('div', { class: 'fh-place-sub' }, e.message || 'Something went wrong.')),
+          actions: [btn('Back', pickDeck, { kind: 'ghost', icon: 'arrow-left' }), btn('Try again', makeDeck, { icon: 'refresh' })],
+        }));
+      }
     }
 
     function nextTurn() {

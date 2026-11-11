@@ -165,19 +165,22 @@ export default {
       };
       const guessed = (name) => {
         if (paused || covered || t.done) return;
-        sfx.good(); buzz(30);
         guesses[name] += 1;
         const next = drawNext(new Set([name])); // the guesser is safe this time
         pass(next === null ? P.indexOf(name) : next); // only 2 players left: nobody else to give it to
       };
 
       const passBtn = letters ? btn('Said one!', () => pass(nextIdx(holder)), { icon: 'check', silent: true }) : null;
-      const skipBtn = letters ? null : btn('Skip', () => { if (!covered) { newWord(); sfx.pass(); } }, { kind: 'ghost', icon: 'arrow-forward-up' });
+      // Describe mode: Skip sits right next to the word; the Who got it? players sit at the bottom.
+      const skipBtn = letters ? null : h('button', {
+        class: 'hp-skip', type: 'button', 'aria-label': 'Skip this word',
+        onclick: () => { if (!covered && !paused) { newWord(); sfx.pass(); } },
+      }, ic('arrow-forward-up'), h('span', null, 'Skip'));
 
       const scr = view({
         color: ctx.color, cls: 'hp-play',
-        body: h('div', { class: 'hp-stage' }, potato, who, todo, letters ? chunkView(chunk) : slot, letters ? null : gotRow),
-        actions: [skipBtn, passBtn],
+        body: h('div', { class: 'hp-stage' }, potato, who, todo, letters ? chunkView(chunk) : h('div', { class: 'hp-wordrow' }, slot, skipBtn)),
+        actions: letters ? [passBtn] : [gotRow],
       });
       setBack(() => doPause());
       mount(scr);
@@ -212,7 +215,7 @@ export default {
       function pass(to) {
         if (paused || covered || t.done) return;
         holder = to;
-        sfx.whoosh(); buzz(25);
+        sfx.chime(); buzz(25); // a guess or a word said: always a happy sound, never a noise burst
         potato.classList.remove('fly'); void potato.offsetWidth; potato.classList.add('fly');
         if (letters) { setWho(); return; } // the letters are the same for everyone, nothing to hide
         showCover();

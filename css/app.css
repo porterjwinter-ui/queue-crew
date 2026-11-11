@@ -354,7 +354,13 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
 .hp-reveal:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--c2); }
 .hp-passto { font-weight: 800; opacity: .6; margin-right: 8px; }
 .hp-who { display: flex; align-items: center; justify-content: center; }
-.hp-play.passing .hp-todo, .hp-play.passing .hp-got { visibility: hidden; }
+.hp-play.passing .hp-todo, .hp-play.passing .hp-got, .hp-play.passing .hp-skip { visibility: hidden; }
+.hp-wordrow { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.hp-wordrow .hp-slot { width: auto; flex: 0 1 auto; min-width: 0; }
+.hp-skip { flex: none; border: 0; background: var(--card); color: var(--ink); border-radius: 18px; box-shadow: 0 4px 0 var(--shadow); padding: 10px 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-weight: 900; font-size: 14px; }
+.hp-skip .ic { font-size: 26px; }
+.hp-skip:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--shadow); }
+.hp-play footer .hp-got { flex: 1; margin-top: 0; }
 .hp-got { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 6px; }
 .hp-got-label { font-weight: 900; font-size: 18px; opacity: .6; }
 .hp-got-avs { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }

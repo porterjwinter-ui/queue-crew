@@ -70,6 +70,8 @@ export const sfx = {
   pop: () => tone(520, 0.08, { type: 'sine', slide: 500, vol: 0.18 }),
   win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.22, { type: 'triangle', delay: i * 0.11, vol: 0.2 })),
   whoosh: () => noise(0.3, { vol: 0.25, filter: 3000 }),
+  // Bright two-note ding for a right answer. Pure tones only, so it can't be mistaken for the BOOM.
+  chime: () => { tone(1319, 0.12, { type: 'sine', vol: 0.22 }); tone(1976, 0.22, { type: 'sine', vol: 0.18, delay: 0.08 }); },
 };
 
 export function buzz(pattern) {

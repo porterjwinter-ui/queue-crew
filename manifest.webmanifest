@@ -1,0 +1,16 @@
+{
+  "name": "Queue Crew",
+  "short_name": "Queue Crew",
+  "description": "Party games for waiting in line. Works offline.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#6c5ce7",
+  "theme_color": "#6c5ce7",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,138 @@
+// Screens that many games share: pass-the-phone, carousels, results, teams.
+import { h, view, btn, mount, avatar, nameTag, confetti, setBack } from './ui.js';
+import { sfx } from './sound.js';
+import { awardRanking, awardAll, addTickets } from './store.js';
+import { shuffle } from './rng.js';
+
+// "Hand the phone to Maya" screen.
+export function passTo(ctx, name, onReady, { label, emoji = '👋', note } = {}) {
+  mount(view({
+    color: ctx.color, back: ctx.quit, title: ctx.name,
+    body: h('div', { class: 'pass' },
+      h('div', { class: 'pass-anim' }, h('span', { class: 'pass-phone' }, '📱'), avatar(name, 'xl')),
+      h('div', { class: 'pass-name' }, name),
+      note ? h('div', { class: 'pass-note' }, note) : null),
+    actions: [btn(label || `I'm ${name}`, onReady, { emoji })],
+  }));
+}
+
+// Horizontal snap carousel. Tap the centered card to pick it; tap a side card to scroll to it.
+export function carousel(items, render, onPick, { start = 0, onChange } = {}) {
+  let current = start;
+  const cards = items.map((it, i) => h('button', {
+    class: 'car-card',
+    onclick: () => {
+      if (i === current) { sfx.tap(); onPick(it, i); }
+      else scrollToCard(i, true);
+    },
+  }, render(it, i)));
+  const track = h('div', { class: 'car-track' }, h('div', { class: 'car-pad' }), cards, h('div', { class: 'car-pad' }));
+  const dots = h('div', { class: 'car-dots' }, items.map(() => h('i')));
+  const wrap = h('div', { class: 'car' }, track, dots);
+
+  function scrollToCard(i, smooth) {
+    const c = cards[i];
+    if (!c) return;
+    const left = c.offsetLeft - (track.clientWidth - c.offsetWidth) / 2;
+    track.scrollTo({ left, behavior: smooth ? 'smooth' : 'auto' });
+  }
+  function update() {
+    const mid = track.scrollLeft + track.clientWidth / 2;
+    let best = 0, bd = Infinity;
+    cards.forEach((c, i) => {
+      const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid);
+      if (d < bd) { bd = d; best = i; }
+    });
+    if (best !== current) { current = best; sfx.tick(); onChange && onChange(best); }
+    cards.forEach((c, i) => c.classList.toggle('on', i === current));
+    [...dots.children].forEach((d, i) => d.classList.toggle('on', i === current));
+  }
+  let raf = 0;
+  track.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(update); }, { passive: true });
+  requestAnimationFrame(() => { scrollToCard(start, false); update(); });
+  wrap.go = (d) => scrollToCard(Math.max(0, Math.min(items.length - 1, current + d)), true);
+  return wrap;
+}
+
+// Final standings + tickets. scores = {name: points}.
+// cantWin: a player who may not take first place (Majority Rules' duck holder).
+export function results(ctx, scores, { lowWins = false, note, cantWin } = {}) {
+  const eff = Object.fromEntries(Object.entries(scores).map(([n, s]) => [n, lowWins ? -s : s]));
+  if (cantWin && cantWin in eff) {
+    const others = Object.entries(eff).filter(([n]) => n !== cantWin).map(([, v]) => v);
+    if (others.length) eff[cantWin] = Math.min(eff[cantWin], Math.max(...others) - 0.5);
+  }
+  const sorted = Object.keys(scores).sort((a, b) => eff[b] - eff[a]);
+  const awards = awardRanking(eff);
+  const medals = ['🥇', '🥈', '🥉'];
+  let rank = 0, last = null;
+  const rows = sorted.map((name, i) => {
+    if (eff[name] !== last) { rank = i; last = eff[name]; }
+    return h('div', { class: `res-row ${rank === 0 ? 'win' : ''}` },
+      h('span', { class: 'res-medal' }, medals[rank] || ''),
+      nameTag(name),
+      h('span', { class: 'res-score' }, String(scores[name])),
+      h('span', { class: 'res-tix' }, awards[name] ? `+${awards[name]}🎟️` : ''));
+  });
+  finish(ctx, h('div', { class: 'results' }, h('div', { class: 'res-trophy' }, '🏆'), note ? h('div', { class: 'res-note' }, note) : null, rows));
+}
+
+// Everyone-on-one-team results. score out of max; tickets by how well the group did.
+export function coopResults(ctx, score, max, { unit = '' } = {}) {
+  const frac = max ? score / max : 0;
+  const stars = frac >= 0.85 ? 3 : frac >= 0.6 ? 2 : frac >= 0.3 ? 1 : 0;
+  const titles = ['Warm-up', 'Nice!', 'Awesome!', 'Legendary!'];
+  const awards = awardAll(ctx.players, stars);
+  finish(ctx, h('div', { class: 'results' },
+    h('div', { class: 'res-stars' }, ['⭐', '⭐', '⭐'].map((s, i) => h('span', { class: i < stars ? 'on' : '' }, s))),
+    h('div', { class: 'res-big' }, `${score}`, h('small', null, ` / ${max}${unit}`)),
+    h('div', { class: 'res-title' }, titles[stars]),
+    stars ? h('div', { class: 'res-tix-all' }, `+${stars}🎟️ each`) : null,
+    h('div', { class: 'res-avs' }, ctx.players.map((p) => avatar(p, 'm')))));
+}
+
+// Team results: winners get 3 tickets each, everyone else 1.
+export function teamResults(ctx, teams, tscores) {
+  const best = Math.max(...tscores);
+  teams.forEach((t, i) => t.members.forEach((m) => addTickets(m, tscores[i] === best ? 3 : 1)));
+  finish(ctx, h('div', { class: 'results' },
+    h('div', { class: 'res-trophy' }, '🏆'),
+    teams.map((t, i) => h('div', { class: `team-res ${tscores[i] === best ? 'win' : ''}`, style: { '--tc': t.color } },
+      h('div', { class: 'team-res-score' }, String(tscores[i])),
+      h('div', { class: 'team-res-avs' }, t.members.map((m) => avatar(m, 's'))),
+      h('div', { class: 'res-tix' }, tscores[i] === best ? '+3🎟️' : '+1🎟️')))));
+}
+
+function finish(ctx, body) {
+  sfx.win();
+  confetti();
+  mount(view({
+    color: ctx.color, back: ctx.exit, title: ctx.name, body,
+    actions: [btn('Home', ctx.exit, { kind: 'ghost', emoji: '🏠' }), btn('Again', ctx.again, { emoji: '🔁' })],
+  }));
+}
+
+// Split players into two teams, alternating.
+export function makeTeams(players) {
+  const order = shuffle(players);
+  const teams = [
+    { color: '#ff5a5f', members: [] },
+    { color: '#3867d6', members: [] },
+  ];
+  order.forEach((p, i) => teams[i % 2].members.push(p));
+  return teams;
+}
+
+export function teamBadge(t, score) {
+  return h('div', { class: 'team-badge', style: { '--tc': t.color } },
+    h('span', { class: 'team-avs' }, t.members.map((m) => avatar(m, 'xs'))),
+    score != null ? h('b', null, String(score)) : null);
+}
+
+// Small row of avatars with points.
+export function scoreStrip(scores, extra = {}) {
+  return h('div', { class: 'score-strip' }, Object.entries(scores).map(([n, s]) =>
+    h('span', { class: 'ss-item' }, avatar(n, 's', extra[n] ? h('i', { class: 'ss-badge' }, extra[n]) : null), h('b', null, String(s)))));
+}
+
+export { setBack };

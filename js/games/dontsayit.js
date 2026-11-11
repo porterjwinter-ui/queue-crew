@@ -1,5 +1,5 @@
 // Don't Say It: get your team to say the word without saying any of the banned words.
-import { h, view, btn, mount, fitText, pauseMenu, setBack, keepAwake, onCleanup, closeOverlay, flash, pop } from '../core/ui.js';
+import { h, view, btn, mount, fitText, pauseMenu, setBack, keepAwake, onCleanup, closeOverlay, flash, pop, ic } from '../core/ui.js';
 import { tabooStream } from '../core/db.js';
 import { timer, ring, onHidden } from '../core/timer.js';
 import { sfx, buzz } from '../core/sound.js';
@@ -26,8 +26,8 @@ const tut = {
     ${art.bubble('ans', 262, 40, 'Pizza!', { w: 70, fs: 14 })}
     ${art.check('ok', 222, 140, 16)}
     ${art.bubble('slip', 70, 40, 'Cheese-', { w: 84, fs: 13, fill: '#ffd1d1' })}
-    ${art.emoji('bleep', 160, 110, '🔇', 64)}
-    ${art.text('pts', 160, 190, '+1 🏆', { fs: 20, fill: '#20bf6b' })}
+    ${art.icon('bleep', 160, 110, 'volume-off', { size: 48, color: '#fff', bg: '#ff3b3b' })}
+    ${art.text('pts', 160, 190, '+1', { fs: 22, fill: '#20bf6b' })}
   `,
   css: `
     .tut-dontsayit .clue, .tut-dontsayit .ans, .tut-dontsayit .ok, .tut-dontsayit .slip, .tut-dontsayit .bleep, .tut-dontsayit .pts,
@@ -46,15 +46,15 @@ const tut = {
     .tut-dontsayit[data-s="3"] .giver { animation: tShake .3s 1s 2; }
   `,
   steps: [
-    { c: '🃏 Get your team to say it', t: 2200 },
-    { c: '🚫 Never say these words', t: 2600 },
-    { c: '✅ They guess = +1', t: 2800 },
-    { c: '🔇 Slip up? BLEEP!', t: 2800 },
+    { c: 'Get your team to say it', t: 2200 },
+    { c: 'Never say these words', t: 2600 },
+    { c: 'They guess = +1', t: 2800 },
+    { c: 'Slip up? BLEEP!', t: 2800 },
   ],
 };
 
 export default {
-  id: 'dontsayit', name: "Don't Say It", emoji: '🤐', color: '#e84393', min: 2, tut,
+  id: 'dontsayit', name: "Don't Say It", icon: 'message-circle-off', color: '#e84393', min: 2, tut,
   start(ctx) {
     const P = ctx.players;
     const coop = P.length < 4;
@@ -73,7 +73,7 @@ export default {
       mount(view({
         color: ctx.color, back: ctx.quit, title: 'Teams',
         body: h('div', { class: 'teams' }, teams.map((t) => teamBadge(t)), h('div', { class: 'vs' }, 'VS')),
-        actions: [btn('Start', nextTurn, { emoji: '▶️' })],
+        actions: [btn('Start', nextTurn, { icon: 'player-play' })],
       }));
     }
 
@@ -82,7 +82,7 @@ export default {
         return coop ? coopResults(ctx, tscores[0], order.length * 5) : teamResults(ctx, teams, tscores);
       }
       const { name, team } = order[turn];
-      passTo(ctx, name, () => play(name, team), { label: 'Ready', emoji: '🤐', note: coop ? null : teamBadge(teams[team]) });
+      passTo(ctx, name, () => play(name, team), { label: 'Ready', icon: 'message-circle-off', note: coop ? null : teamBadge(teams[team]) });
     }
 
     function play(name, team) {
@@ -100,7 +100,7 @@ export default {
       const show = () => {
         cur = cards.next();
         word.textContent = cur.word;
-        banned.replaceChildren(...cur.banned.map((b) => h('div', { class: 'ds-ban' }, '🚫 ', b)));
+        banned.replaceChildren(...cur.banned.map((b) => h('div', { class: 'ds-ban' }, ic('ban'), b)));
         cardEl.classList.remove('in'); void cardEl.offsetWidth; cardEl.classList.add('in');
         requestAnimationFrame(() => fitText(word, 54, 20));
       };
@@ -109,19 +109,19 @@ export default {
         color: ctx.color, cls: 'ds-play',
         body: h('div', { class: 'ds-stage' }, h('div', { class: 'ds-top' }, r.el, scoreEl), cardEl),
         actions: [
-          btn('Skip', () => { if (!paused) { sfx.pass(); show(); } }, { kind: 'ghost', emoji: '⤴️', silent: true }),
+          btn('Skip', () => { if (!paused) { sfx.pass(); show(); } }, { kind: 'ghost', icon: 'arrow-forward-up', silent: true }),
           btn('Bleep', () => {
             if (paused) return;
             bleeps += 1; sfx.bleep(); buzz([80, 40, 80]); flash('#ff3b3b');
             if (coop) tscores[0] = Math.max(0, tscores[0] - 1); else tscores[other] += 1;
             pop(coop ? '−1' : '+1', { y: 30, color: coop ? '#ff3b3b' : teams[other].color });
             show();
-          }, { kind: 'danger', emoji: '🔇', silent: true }),
+          }, { kind: 'danger', icon: 'volume-off', silent: true }),
           btn('Got it', () => {
             if (paused) return;
             got += 1; tscores[team] += 1; scoreEl.textContent = String(got);
             sfx.good(); buzz(40); flash('#20bf6b'); show();
-          }, { emoji: '✅', silent: true }),
+          }, { icon: 'check', silent: true }),
         ],
       }));
       setBack(() => doPause());
@@ -153,9 +153,9 @@ export default {
         mount(view({
           color: ctx.color, back: ctx.quit, title: name,
           body: h('div', { class: 'turn-end' },
-            h('div', { class: 'te-row' }, h('span', { class: 'te-big ok' }, `✅ ${got}`), h('span', { class: 'te-big bad' }, `🔇 ${bleeps}`)),
+            h('div', { class: 'te-row' }, h('span', { class: 'te-big ok' }, ic('check'), String(got)), h('span', { class: 'te-big bad' }, ic('volume-off'), String(bleeps))),
             coop ? h('div', { class: 'res-big' }, String(tscores[0])) : h('div', { class: 'teams' }, teams.map((tm, i) => teamBadge(tm, tscores[i])))),
-          actions: [btn(turn >= order.length ? 'Results' : 'Next', nextTurn, { emoji: turn >= order.length ? '🏁' : '➡️' })],
+          actions: [btn(turn >= order.length ? 'Results' : 'Next', nextTurn, { icon: turn >= order.length ? 'flag' : 'arrow-right' })],
         }));
       }
     }

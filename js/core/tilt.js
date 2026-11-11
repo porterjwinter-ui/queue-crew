@@ -6,7 +6,7 @@
 //
 //   screen facing the sky   -> up.z = +1
 //   screen facing the floor -> up.z = -1   (you nodded: "got it")
-//   phone upright on head   -> up.z ≈  0
+//   phone upright on head   -> up.z about  0
 
 let permission = 'unknown';
 

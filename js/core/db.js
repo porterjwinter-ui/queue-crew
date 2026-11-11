@@ -62,8 +62,8 @@ function stream(pool, key, keyOf = (e) => e.w) {
 
 // ---------- Forehead decks ----------
 export function decks() {
-  return [{ id: 'mix', name: 'Mix', emoji: '🎲' }].concat(
-    DB.categories.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, act: !!c.act }))
+  return [{ id: 'mix', name: 'Mix', icon: 'arrows-shuffle' }].concat(
+    DB.categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, act: !!c.act }))
   );
 }
 export function deckStream(deckId, level) {
@@ -82,7 +82,7 @@ export function imposterRound(level) {
   const word = s.next();
   const decoys = pool.filter((e) => e.w !== word.w);
   const decoy = pick(decoys);
-  return { topic: g.n, emoji: g.cat.emoji, word: word.w, decoy: decoy.w };
+  return { topic: g.n, icon: g.cat.icon, word: word.w, decoy: decoy.w };
 }
 
 // ---------- Don't Say It ----------

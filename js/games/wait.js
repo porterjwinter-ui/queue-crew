@@ -1,9 +1,9 @@
 // Guess the Wait: everyone guesses how many minutes until you board. Closest without going over wins.
 // The clock keeps running in the background while you play other games.
-import { h, view, btn, mount, avatar, nameTag, onCleanup, confetti, confirmBox } from '../core/ui.js';
+import { h, view, btn, mount, avatar, nameTag, onCleanup, confetti, confirmBox, ic } from '../core/ui.js';
 import { store, awardRanking } from '../core/store.js';
 import { sfx, buzz } from '../core/sound.js';
-import { passTo } from '../core/flow.js';
+import { passTo, tix } from '../core/flow.js';
 import { art } from '../core/tutorial.js';
 
 const X = [70, 160, 250];
@@ -18,7 +18,7 @@ const tut = {
       <circle r="3.5" fill="#1d1530"/>
     </g></g>
     ${art.text('actual', 160, 40, '38 min', { fs: 22, fill: '#4b6584' })}
-    ${art.emoji('crown', 160, 64, '👑', 30)}
+    ${art.icon('crown', 160, 62, 'crown-filled', { size: 28, color: '#f7b731' })}
     ${art.cross('over', 250, 62, 14)}
   `,
   css: `
@@ -35,9 +35,9 @@ const tut = {
     .tut-wait[data-s="2"] .p1 { animation: tBounce .4s 1.2s 3 alternate; }
   `,
   steps: [
-    { c: '🤔 Everyone guesses the wait', t: 2400 },
-    { c: '⏱️ The clock runs…', t: 2000 },
-    { c: '👑 Closest without going over', t: 3200 },
+    { c: 'Everyone guesses the wait', t: 2400 },
+    { c: 'The clock runs…', t: 2000 },
+    { c: 'Closest without going over', t: 3200 },
   ],
 };
 
@@ -53,7 +53,7 @@ const fmt = (ms) => {
 };
 
 export default {
-  id: 'wait', name: 'Guess the Wait', emoji: '⏱️', color: '#4b6584', min: 1, tut,
+  id: 'wait', name: 'Guess the Wait', icon: 'stopwatch', color: '#4b6584', min: 1, tut,
   start(ctx) {
     const running = waitRunning();
     if (running) return clock(running);
@@ -83,8 +83,8 @@ export default {
       });
       mount(view({
         color: ctx.color, back: ctx.quit, title: name,
-        body: h('div', { class: 'wt-pick' }, h('div', { class: 'wt-q' }, '⏱️ How long?'), num, slider),
-        actions: [btn('Lock in', () => { guesses[name] = v; i += 1; sfx.pop(); ask(); }, { emoji: '🔒' })],
+        body: h('div', { class: 'wt-pick' }, h('div', { class: 'wt-q' }, ic('stopwatch'), 'How long?'), num, slider),
+        actions: [btn('Lock in', () => { guesses[name] = v; i += 1; sfx.pop(); ask(); }, { icon: 'lock' })],
       }));
     }
 
@@ -96,10 +96,10 @@ export default {
         color: ctx.color, back: ctx.exit, title: ctx.name,
         body: h('div', { class: 'wt-run' }, big,
           h('div', { class: 'wt-avs' }, Object.keys(w.guesses).map((n) => h('span', { class: 'wt-av' }, avatar(n, 'm'), h('b', null, '?')))),
-          h('div', { class: 'wt-tip' }, '🏠 Play other games — it keeps counting')),
+          h('div', { class: 'wt-tip' }, ic('home'), 'Play other games. It keeps counting.')),
         actions: [
-          btn('Cancel', () => confirmBox({ color: ctx.color, emoji: '🗑️', text: 'Stop the clock?', onYes: () => { store.del('wait'); ctx.exit(); } }), { kind: 'ghost', emoji: '✖️' }),
-          btn("We're on!", () => finish(w), { emoji: '🎢' }),
+          btn('Cancel', () => confirmBox({ color: ctx.color, icon: 'trash', text: 'Stop the clock?', onYes: () => { store.del('wait'); ctx.exit(); } }), { kind: 'ghost', icon: 'x' }),
+          btn("We're on!", () => finish(w), { icon: 'circle-check' }),
         ],
       }));
     }
@@ -121,12 +121,12 @@ export default {
           h('div', { class: 'wt-bars' }, sorted.map((n, k) => {
             const g = w.guesses[n];
             return h('div', { class: `wt-bar ${k === 0 ? 'win' : ''} ${g > actual ? 'over' : ''}` },
-              nameTag(n, k === 0 ? h('span', null, ' 👑') : null),
+              nameTag(n, k === 0 ? ic('crown-filled', 'gold') : null),
               h('div', { class: 'wt-track' }, h('div', { class: 'wt-fill', style: { width: `${(g / maxG) * 100}%` } }), h('div', { class: 'wt-line', style: { left: `${(actual / maxG) * 100}%` } })),
               h('b', null, `${g}`),
-              h('span', { class: 'res-tix' }, awards[n] ? `+${awards[n]}🎟️` : ''));
+              tix(awards[n]));
           }))),
-        actions: [btn('Home', () => { store.del('wait'); ctx.exit(); }, { emoji: '🏠' })],
+        actions: [btn('Home', () => { store.del('wait'); ctx.exit(); }, { icon: 'home' })],
       }));
     }
   },

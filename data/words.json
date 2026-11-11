@@ -2,7 +2,7 @@
   "version": 1,
   "categories": [
     {
-      "id": "animals", "name": "Animals", "emoji": "🦁",
+      "id": "animals", "name": "Animals", "icon": "paw",
       "groups": [
         {"id": "farm", "n": "Farm Animals", "s": "farm animal",
           "e": ["cow", "pig", "horse", "sheep", "chicken", "duck", "goat", "donkey", "turkey", "rooster"],
@@ -35,7 +35,7 @@
       ]
     },
     {
-      "id": "food", "name": "Food", "emoji": "🍕",
+      "id": "food", "name": "Food", "icon": "pizza",
       "groups": [
         {"id": "fruit", "n": "Fruit", "s": "fruit",
           "e": ["apple", "banana", "orange", "grapes", "strawberry", "watermelon", "cherry", "pear", "lemon", "pineapple"],
@@ -68,7 +68,7 @@
       ]
     },
     {
-      "id": "park", "name": "Theme Park", "emoji": "🎢",
+      "id": "park", "name": "Theme Park", "icon": "building-carousel",
       "groups": [
         {"id": "rides", "n": "Rides", "s": "ride",
           "e": ["roller coaster", "carousel", "Ferris wheel", "bumper cars", "slide", "teacups"],
@@ -85,7 +85,7 @@
       ]
     },
     {
-      "id": "characters", "name": "Characters", "emoji": "🧙",
+      "id": "characters", "name": "Characters", "icon": "wand",
       "groups": [
         {"id": "fantasy", "n": "Fantasy Characters", "s": "fantasy character",
           "e": ["pirate", "princess", "superhero", "wizard", "robot", "mermaid", "dragon", "knight", "ghost", "monster"],
@@ -106,7 +106,7 @@
       ]
     },
     {
-      "id": "people", "name": "Jobs & People", "emoji": "👩‍🚒",
+      "id": "people", "name": "Jobs & People", "icon": "briefcase",
       "groups": [
         {"id": "jobs", "n": "Jobs", "s": "job",
           "e": ["doctor", "teacher", "firefighter", "police officer", "chef", "farmer", "pilot", "nurse"],
@@ -119,7 +119,7 @@
       ]
     },
     {
-      "id": "actions", "name": "Act It Out", "emoji": "🏃", "act": true,
+      "id": "actions", "name": "Act It Out", "icon": "run", "act": true,
       "groups": [
         {"id": "doing", "n": "Actions", "s": "action", "k": "act",
           "e": ["brushing teeth", "sleeping", "eating", "swimming", "dancing", "jumping", "crying", "laughing", "sneezing", "running"],
@@ -132,7 +132,7 @@
       ]
     },
     {
-      "id": "sounds", "name": "Make the Sound", "emoji": "🔊", "act": true,
+      "id": "sounds", "name": "Make the Sound", "icon": "volume", "act": true,
       "groups": [
         {"id": "noises", "n": "Sounds", "s": "sound", "k": "act",
           "e": ["dog barking", "cat meowing", "cow mooing", "car horn", "fire truck siren", "train whistle", "doorbell", "clock ticking"],
@@ -141,7 +141,7 @@
       ]
     },
     {
-      "id": "stuff", "name": "Stuff", "emoji": "🧸",
+      "id": "stuff", "name": "Stuff", "icon": "puzzle",
       "groups": [
         {"id": "home", "n": "Things at Home", "s": "thing at home",
           "e": ["bed", "chair", "table", "lamp", "door", "window", "toothbrush", "pillow", "blanket", "TV", "clock"],
@@ -174,7 +174,7 @@
       ]
     },
     {
-      "id": "places", "name": "Places", "emoji": "🗺️",
+      "id": "places", "name": "Places", "icon": "map-2",
       "groups": [
         {"id": "town", "n": "Places in Town", "s": "place in town",
           "e": ["school", "park", "zoo", "beach", "library", "hospital", "grocery store", "farm", "playground"],
@@ -191,7 +191,7 @@
       ]
     },
     {
-      "id": "sports", "name": "Sports & Games", "emoji": "⚽",
+      "id": "sports", "name": "Sports & Games", "icon": "ball-football",
       "groups": [
         {"id": "sport", "n": "Sports", "s": "sport",
           "e": ["soccer", "basketball", "baseball", "football", "tennis", "golf", "bowling"],
@@ -204,7 +204,7 @@
       ]
     },
     {
-      "id": "music", "name": "Music & Party", "emoji": "🎸",
+      "id": "music", "name": "Music & Party", "icon": "music",
       "groups": [
         {"id": "instruments", "n": "Instruments", "s": "instrument",
           "e": ["drums", "guitar", "piano", "violin", "trumpet", "flute"],
@@ -221,7 +221,7 @@
       ]
     },
     {
-      "id": "nature", "name": "Nature & Space", "emoji": "🌎",
+      "id": "nature", "name": "Nature & Space", "icon": "plant",
       "groups": [
         {"id": "weather", "n": "Weather", "s": "kind of weather",
           "e": ["rain", "snow", "sunshine", "wind", "rainbow", "cloud", "storm", "lightning"],
@@ -238,7 +238,7 @@
       ]
     },
     {
-      "id": "vehicles", "name": "Vehicles", "emoji": "🚗",
+      "id": "vehicles", "name": "Vehicles", "icon": "car",
       "groups": [
         {"id": "vehicles", "n": "Vehicles", "s": "vehicle",
           "e": ["car", "bus", "train", "airplane", "boat", "bike", "truck", "fire truck", "school bus", "helicopter", "tractor"],
@@ -247,7 +247,7 @@
       ]
     },
     {
-      "id": "body", "name": "Body", "emoji": "👃",
+      "id": "body", "name": "Body", "icon": "ear",
       "groups": [
         {"id": "bodyparts", "n": "Body Parts", "s": "body part",
           "e": ["nose", "ear", "eye", "hand", "foot", "tooth", "hair", "knee", "elbow", "belly button"],
@@ -256,7 +256,7 @@
       ]
     },
     {
-      "id": "sayings", "name": "Sayings", "emoji": "💬", "act": true,
+      "id": "sayings", "name": "Sayings", "icon": "quote", "act": true,
       "groups": [
         {"id": "phrases", "n": "Sayings", "s": "saying", "k": "act",
           "e": ["high five", "thumbs up", "peace sign", "bear hug"],
@@ -663,22 +663,26 @@
   },
 
   "spot": [
-    ["🎈", "Balloon"], ["🕶️", "Sunglasses"], ["🧢", "Baseball cap"], ["👕", "Matching shirts"], ["👶", "Stroller"],
-    ["🧒", "Kid on shoulders"], ["🎧", "Headphones"], ["🤳", "Selfie"], ["🗺️", "Paper map"], ["🍦", "Ice cream"],
-    ["🥤", "Giant cup"], ["☂️", "Umbrella"], ["🧥", "Poncho"], ["🎒", "Backpack"], ["👟", "Light-up shoes"],
-    ["🧸", "Stuffed animal"], ["👑", "Crown or tiara"], ["🎀", "Big hair bow"], ["🦄", "Unicorn anything"], ["🦖", "Dinosaur anything"],
-    ["🌈", "Rainbow anything"], ["🎂", "Birthday button"], ["🥨", "Pretzel"], ["🍿", "Popcorn bucket"], ["💧", "Water bottle"],
-    ["🔋", "Phone charger"], ["🧴", "Sunscreen"], ["🥱", "Someone yawning"], ["🙌", "High five"], ["👓", "Glasses"],
-    ["👋", "Someone waving"], ["🤠", "Cowboy hat"], ["🪭", "Hand fan"], ["🍭", "Lollipop"], ["🎟️", "Ticket"],
-    ["⌚", "Smartwatch"], ["🧦", "Crazy socks"], ["🦸", "Superhero shirt"], ["🐭", "Animal ears"], ["🦋", "Butterfly"],
-    ["🐦", "Bird"], ["🐿️", "Squirrel"], ["🦆", "Duck"], ["☁️", "Funny cloud"], ["✈️", "Airplane"],
-    ["🚧", "Construction sign"], ["🧹", "Someone sweeping"], ["🗑️", "Trash can"], ["🪧", "Wait time sign"], ["🎶", "Music playing"],
-    ["💦", "Water spray"], ["🧊", "Shaved ice"], ["🎨", "Face paint"], ["🧚", "Fairy wings"], ["🦹", "Cape"],
-    ["🏴‍☠️", "Pirate hat"], ["🧙", "Wizard hat"], ["⭐", "Stars pattern"], ["🔴", "Polka dots"], ["🐆", "Animal print"],
-    ["🧡", "All orange outfit"], ["🖤", "All black outfit"], ["👖", "Overalls"], ["🩴", "Flip-flops"], ["🥾", "Hiking boots"],
-    ["📖", "Someone reading"], ["🤗", "Hug"], ["💤", "Sleeping kid"], ["🍼", "Baby bottle"], ["🧁", "Cupcake"],
-    ["📷", "Real camera"], ["🎮", "Handheld game"], ["🥳", "Party hat"], ["🌭", "Corn dog"], ["🍕", "Pizza slice"],
-    ["🐉", "Dragon anything"], ["🤖", "Robot anything"], ["🧃", "Juice box"], ["😎", "Thumbs up"], ["🫧", "Bubbles"],
-    ["🦩", "Flamingo anything"], ["🐻", "Bear anything"], ["🌻", "Flowers"], ["🔵", "All blue outfit"], ["💇", "Braids"]
+    ["balloon", "Balloon"], ["sunglasses", "Sunglasses"], ["baby-carriage", "Stroller"], ["ice-cream", "Ice cream"],
+    ["umbrella", "Umbrella"], ["backpack", "Backpack"], ["shirt", "Matching shirts"], ["shoe", "Light-up shoes"],
+    ["crown", "Crown or tiara"], ["camera", "Real camera"], ["camera-selfie", "Selfie"], ["map-2", "Paper map"],
+    ["ticket", "Ticket"], ["cup", "Giant cup"], ["bottle", "Water bottle"], ["baby-bottle", "Baby bottle"],
+    ["lollipop", "Lollipop"], ["candy", "Candy"], ["cookie", "Cookie"], ["pizza", "Pizza slice"],
+    ["cake", "Birthday button"], ["meat", "Turkey leg"], ["ice-cream-2", "Shaved ice"], ["lemon", "Lemonade"],
+    ["coffee", "Coffee cup"], ["gift", "Gift bag"], ["shopping-bag", "Shopping bag"], ["butterfly", "Butterfly"],
+    ["dog", "Dog"], ["cat", "Cat anything"], ["fish", "Fish anything"], ["spider", "Spider anything"],
+    ["bat", "Bat anything"], ["dragon", "Dragon anything"], ["robot", "Robot anything"], ["ghost", "Ghost anything"],
+    ["alien", "Alien anything"], ["rocket", "Rocket anything"], ["star", "Stars pattern"], ["heart", "Hearts pattern"],
+    ["flower", "Flowers"], ["tree", "Tree"], ["cloud", "Funny cloud"], ["plane", "Airplane"],
+    ["feather", "Feather"], ["leaf", "Leaf"], ["bug", "Bug"], ["trash", "Trash can"],
+    ["barrier-block", "Construction sign"], ["hourglass", "Wait time sign"], ["door-exit", "Exit sign"], ["speakerphone", "Announcement"],
+    ["music", "Music playing"], ["microphone", "Someone singing"], ["hand-stop", "Someone waving"], ["thumb-up", "Thumbs up"],
+    ["hand-love-you", "Rock on hand"], ["mood-happy", "Big laugh"], ["zzz", "Sleeping kid"], ["book", "Someone reading"],
+    ["device-gamepad-2", "Handheld game"], ["headphones", "Headphones"], ["device-watch", "Smartwatch"], ["eyeglass", "Glasses"],
+    ["palette", "Face paint"], ["wand", "Magic wand"], ["sword", "Toy sword"], ["bubble", "Bubbles"],
+    ["flag", "Flag"], ["sock", "Crazy socks"], ["users", "Big group"], ["user-heart", "Hug"],
+    ["tent", "Tent or canopy"], ["bike", "Bike"], ["scooter", "Scooter"], ["building-carousel", "Spinning ride"],
+    ["horse-toy", "Toy"], ["puzzle", "Puzzle print"], ["wind", "Hand fan"], ["droplet", "Water spray"],
+    ["confetti", "Party anything"], ["ear", "Animal ears"], ["device-mobile", "Phone at 1%"], ["umbrella-closed", "Closed umbrella"]
   ]
 }

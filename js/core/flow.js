@@ -1,18 +1,18 @@
 // Screens that many games share: pass-the-phone, carousels, results, teams.
-import { h, view, btn, mount, avatar, nameTag, confetti, setBack } from './ui.js';
+import { h, view, btn, mount, avatar, nameTag, confetti, setBack, ic, stars } from './ui.js';
 import { sfx } from './sound.js';
 import { awardRanking, awardAll, addTickets } from './store.js';
 import { shuffle } from './rng.js';
 
 // "Hand the phone to Maya" screen.
-export function passTo(ctx, name, onReady, { label, emoji = '👋', note } = {}) {
+export function passTo(ctx, name, onReady, { label, icon = 'hand-stop', note } = {}) {
   mount(view({
     color: ctx.color, back: ctx.quit, title: ctx.name,
     body: h('div', { class: 'pass' },
-      h('div', { class: 'pass-anim' }, h('span', { class: 'pass-phone' }, '📱'), avatar(name, 'xl')),
+      h('div', { class: 'pass-anim' }, h('span', { class: 'pass-phone' }, ic('device-mobile')), avatar(name, 'xl')),
       h('div', { class: 'pass-name' }, name),
       note ? h('div', { class: 'pass-note' }, note) : null),
-    actions: [btn(label || `I'm ${name}`, onReady, { emoji })],
+    actions: [btn(label || `I'm ${name}`, onReady, { icon })],
   }));
 }
 
@@ -64,30 +64,30 @@ export function results(ctx, scores, { lowWins = false, note, cantWin } = {}) {
   }
   const sorted = Object.keys(scores).sort((a, b) => eff[b] - eff[a]);
   const awards = awardRanking(eff);
-  const medals = ['🥇', '🥈', '🥉'];
+  const medal = (r) => (r < 3 ? h('span', { class: `rank r${r + 1}` }, String(r + 1)) : null);
   let rank = 0, last = null;
   const rows = sorted.map((name, i) => {
     if (eff[name] !== last) { rank = i; last = eff[name]; }
     return h('div', { class: `res-row ${rank === 0 ? 'win' : ''}` },
-      h('span', { class: 'res-medal' }, medals[rank] || ''),
+      h('span', { class: 'res-medal' }, medal(rank)),
       nameTag(name),
       h('span', { class: 'res-score' }, String(scores[name])),
-      h('span', { class: 'res-tix' }, awards[name] ? `+${awards[name]}🎟️` : ''));
+      tix(awards[name]));
   });
-  finish(ctx, h('div', { class: 'results' }, h('div', { class: 'res-trophy' }, '🏆'), note ? h('div', { class: 'res-note' }, note) : null, rows));
+  finish(ctx, h('div', { class: 'results' }, h('div', { class: 'res-trophy' }, ic('trophy')), note ? h('div', { class: 'res-note' }, note) : null, rows));
 }
 
 // Everyone-on-one-team results. score out of max; tickets by how well the group did.
 export function coopResults(ctx, score, max, { unit = '' } = {}) {
   const frac = max ? score / max : 0;
-  const stars = frac >= 0.85 ? 3 : frac >= 0.6 ? 2 : frac >= 0.3 ? 1 : 0;
+  const nStars = frac >= 0.85 ? 3 : frac >= 0.6 ? 2 : frac >= 0.3 ? 1 : 0;
   const titles = ['Warm-up', 'Nice!', 'Awesome!', 'Legendary!'];
-  const awards = awardAll(ctx.players, stars);
+  awardAll(ctx.players, nStars);
   finish(ctx, h('div', { class: 'results' },
-    h('div', { class: 'res-stars' }, ['⭐', '⭐', '⭐'].map((s, i) => h('span', { class: i < stars ? 'on' : '' }, s))),
+    stars(nStars, 'res-stars'),
     h('div', { class: 'res-big' }, `${score}`, h('small', null, ` / ${max}${unit}`)),
-    h('div', { class: 'res-title' }, titles[stars]),
-    stars ? h('div', { class: 'res-tix-all' }, `+${stars}🎟️ each`) : null,
+    h('div', { class: 'res-title' }, titles[nStars]),
+    nStars ? h('div', { class: 'res-tix-all' }, tix(nStars), h('span', null, 'each')) : null,
     h('div', { class: 'res-avs' }, ctx.players.map((p) => avatar(p, 'm')))));
 }
 
@@ -96,11 +96,11 @@ export function teamResults(ctx, teams, tscores) {
   const best = Math.max(...tscores);
   teams.forEach((t, i) => t.members.forEach((m) => addTickets(m, tscores[i] === best ? 3 : 1)));
   finish(ctx, h('div', { class: 'results' },
-    h('div', { class: 'res-trophy' }, '🏆'),
+    h('div', { class: 'res-trophy' }, ic('trophy')),
     teams.map((t, i) => h('div', { class: `team-res ${tscores[i] === best ? 'win' : ''}`, style: { '--tc': t.color } },
       h('div', { class: 'team-res-score' }, String(tscores[i])),
       h('div', { class: 'team-res-avs' }, t.members.map((m) => avatar(m, 's'))),
-      h('div', { class: 'res-tix' }, tscores[i] === best ? '+3🎟️' : '+1🎟️')))));
+      tix(tscores[i] === best ? 3 : 1)))));
 }
 
 function finish(ctx, body) {
@@ -108,8 +108,13 @@ function finish(ctx, body) {
   confetti();
   mount(view({
     color: ctx.color, back: ctx.exit, title: ctx.name, body,
-    actions: [btn('Home', ctx.exit, { kind: 'ghost', emoji: '🏠' }), btn('Again', ctx.again, { emoji: '🔁' })],
+    actions: [btn('Home', ctx.exit, { kind: 'ghost', icon: 'home' }), btn('Again', ctx.again, { icon: 'refresh' })],
   }));
+}
+
+// "+3" with a ticket icon.
+export function tix(n) {
+  return h('span', { class: 'res-tix' }, n ? [`+${n}`, ic('ticket')] : '');
 }
 
 // Split players into two teams, alternating.
@@ -132,7 +137,7 @@ export function teamBadge(t, score) {
 // Small row of avatars with points.
 export function scoreStrip(scores, extra = {}) {
   return h('div', { class: 'score-strip' }, Object.entries(scores).map(([n, s]) =>
-    h('span', { class: 'ss-item' }, avatar(n, 's', extra[n] ? h('i', { class: 'ss-badge' }, extra[n]) : null), h('b', null, String(s)))));
+    h('span', { class: 'ss-item' }, avatar(n, 's', extra[n] ? h('i', { class: 'ss-badge' }, ic(extra[n])) : null), h('b', null, String(s)))));
 }
 
 export { setBack };

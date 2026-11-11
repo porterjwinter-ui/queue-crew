@@ -1,19 +1,19 @@
 // Fishbowl: fill a bowl with words, then go through the SAME words three times:
 // 1) describe it, 2) one word only, 3) sounds only.
-import { h, view, btn, mount, fitText, enable, pauseMenu, setBack, keepAwake, onCleanup, closeOverlay, flash } from '../core/ui.js';
+import { h, view, btn, mount, fitText, enable, pauseMenu, setBack, keepAwake, onCleanup, closeOverlay, flash, ic } from '../core/ui.js';
 import { fishbowlStream } from '../core/db.js';
 import { shuffle } from '../core/rng.js';
 import { timer, ring, onHidden } from '../core/timer.js';
 import { sfx, buzz } from '../core/sound.js';
 import { passTo, makeTeams, teamBadge, teamResults, coopResults } from '../core/flow.js';
-import { art } from '../core/tutorial.js';
+import { art, glyph } from '../core/tutorial.js';
 
 const TURN = 45;
 const PER_PLAYER = 3;
 const ROUNDS = [
-  { emoji: '🗣️', rule: 'Describe it' },
-  { emoji: '☝️', rule: 'ONE word only' },
-  { emoji: '🔊', rule: 'Sounds only' },
+  { icon: 'message-circle', rule: 'Describe it' },
+  { icon: 'number-1', rule: 'ONE word only' },
+  { icon: 'volume', rule: 'Sounds only' },
 ];
 
 const slip = (cls, x, y, rot = 0) => art.at(x, y, `<g class="a ${cls}"><rect x="-12" y="-7" width="24" height="14" rx="2" fill="#fff8d6" stroke="#1d1530" stroke-width="2" transform="rotate(${rot})"/></g>`);
@@ -27,11 +27,11 @@ const tut = {
     <g transform="translate(160 150)"><g class="a bowl">
       <path d="M-46 -40 Q-62 0 -40 34 Q0 50 40 34 Q62 0 46 -40 Z" fill="#c9f1ff" stroke="#1d1530" stroke-width="3" opacity=".9"/>
       <ellipse cx="0" cy="-40" rx="46" ry="9" fill="#e9fbff" stroke="#1d1530" stroke-width="3"/>
-      <text x="-12" y="20" font-size="22">🐟</text>
+      <g transform="translate(0 12)">${glyph('fish', 24, '#2e86de')}</g>
     </g></g>
-    ${art.emoji('r1', 160, 50, '🗣️', 44)}${art.emoji('r2', 160, 50, '☝️', 44)}${art.emoji('r3', 160, 50, '🔊', 44)}
+    ${art.icon('r1', 160, 50, 'message-circle', { size: 40, color: '#0fb9b1' })}${art.icon('r2', 160, 50, 'number-1', { size: 40, color: '#0fb9b1' })}${art.icon('r3', 160, 50, 'volume', { size: 40, color: '#0fb9b1' })}
     ${art.text('n1', 205, 30, '1', { fs: 22, fill: '#0fb9b1' })}${art.text('n2', 205, 30, '2', { fs: 22, fill: '#0fb9b1' })}${art.text('n3', 205, 30, '3', { fs: 22, fill: '#0fb9b1' })}
-    ${art.emoji('loop', 160, 52, '🔁', 50)}
+    ${art.icon('loop', 160, 52, 'refresh', { size: 44, color: '#0fb9b1' })}
   `,
   css: `
     .tut-fishbowl .r1, .tut-fishbowl .r2, .tut-fishbowl .r3, .tut-fishbowl .n1, .tut-fishbowl .n2, .tut-fishbowl .n3, .tut-fishbowl .loop { transform: scale(0); }
@@ -53,19 +53,19 @@ const tut = {
     .tut-fishbowl[data-s="4"] .bowl { animation: tShake .4s .3s 3; }
   `,
   steps: [
-    { c: '✍️ Everyone adds words', t: 2800 },
-    { c: '🗣️ Round 1: describe it', t: 2000 },
-    { c: '☝️ Round 2: ONE word', t: 2000 },
-    { c: '🔊 Round 3: sounds only', t: 2000 },
-    { c: '🔁 Same words every round!', t: 2400 },
+    { c: 'Everyone adds words', t: 2800 },
+    { c: 'Round 1: describe it', t: 2000 },
+    { c: 'Round 2: ONE word', t: 2000 },
+    { c: 'Round 3: sounds only', t: 2000 },
+    { c: 'Same words every round!', t: 2400 },
   ],
 };
 
 export default {
-  id: 'fishbowl', name: 'Fishbowl', emoji: '🐟', color: '#0fb9b1', min: 2, tut,
+  id: 'fishbowl', name: 'Fishbowl', icon: 'fish', color: '#0fb9b1', min: 2, tut,
   modes: [
-    { id: 'write', label: 'We write', emoji: '✍️', art: ['🧑', '✍️', '🐟'] },
-    { id: 'auto', label: 'Surprise', emoji: '🎲', art: ['🎲', '→', '🐟'] },
+    { id: 'write', label: 'We write', icon: 'pencil', art: ['i:users', 'i:pencil', 'i:fish'] },
+    { id: 'auto', label: 'Surprise', icon: 'dice-5', art: ['i:dice-5', 'i:arrow-right', 'i:fish'] },
   ],
   start(ctx) {
     const P = ctx.players;
@@ -91,7 +91,7 @@ export default {
     function addScreen(pi, n) {
       if (n >= PER_PLAYER) return fill(pi + 1);
       const input = h('input', { class: 'big-input', type: 'text', maxlength: 40, autocomplete: 'off', autocapitalize: 'words', enterkeyhint: 'done', placeholder: 'A person, place or thing' });
-      const add = btn('Add', () => submit(), { emoji: '➕', disabled: true });
+      const add = btn('Add', () => submit(), { icon: 'plus', disabled: true });
       input.addEventListener('input', () => enable(add, input.value.trim().length > 1));
       input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
       function submit() {
@@ -104,10 +104,10 @@ export default {
       mount(view({
         color: ctx.color, back: ctx.quit, title: P[pi],
         body: h('div', { class: 'answer' },
-          h('div', { class: 'slips' }, Array.from({ length: PER_PLAYER }, (_, k) => h('span', { class: `slip ${k < n ? 'on' : ''}` }, k < n ? '✓' : ''))),
+          h('div', { class: 'slips' }, Array.from({ length: PER_PLAYER }, (_, k) => h('span', { class: `slip ${k < n ? 'on' : ''}` }, k < n ? ic('check') : null))),
           input),
         actions: [
-          btn('Idea', () => { input.value = gen.next().w; enable(add, true); input.focus(); }, { kind: 'ghost', emoji: '🎲' }),
+          btn('Idea', () => { input.value = gen.next().w; enable(add, true); input.focus(); }, { kind: 'ghost', icon: 'dice-5' }),
           add,
         ],
       }));
@@ -122,11 +122,11 @@ export default {
       mount(view({
         color: ctx.color, back: ctx.quit, title: `Round ${round + 1}`,
         body: h('div', { class: 'fb-round' },
-          h('div', { class: 'fb-round-emoji' }, R.emoji),
+          h('div', { class: 'fb-round-ico' }, ic(R.icon)),
           h('div', { class: 'fb-round-rule' }, R.rule),
-          h('div', { class: 'fb-bowl' }, '🐟 ', String(bowl.length)),
+          h('div', { class: 'fb-bowl' }, ic('fish'), String(bowl.length)),
           coop ? null : h('div', { class: 'teams' }, teams.map((t, i) => teamBadge(t, tscores[i])))),
-        actions: [btn('Go', nextTurn, { emoji: '▶️' })],
+        actions: [btn('Go', nextTurn, { icon: 'player-play' })],
       }));
     }
 
@@ -134,7 +134,7 @@ export default {
       const team = coop ? 0 : turnNo % 2;
       const members = teams[team].members;
       const name = members[Math.floor(turnNo / teams.length) % members.length];
-      passTo(ctx, name, () => play(name, team), { label: 'Ready', emoji: ROUNDS[round].emoji, note: coop ? null : teamBadge(teams[team]) });
+      passTo(ctx, name, () => play(name, team), { label: 'Ready', icon: ROUNDS[round].icon, note: coop ? null : teamBadge(teams[team]) });
     }
 
     function play(name, team) {
@@ -150,18 +150,18 @@ export default {
         if (!bowl.length) return end(true);
         cur = bowl.shift();
         word.textContent = cur;
-        count.textContent = `🐟 ${bowl.length + 1}`;
+        count.replaceChildren(ic('fish'), String(bowl.length + 1));
         box.classList.remove('in'); void box.offsetWidth; box.classList.add('in');
         requestAnimationFrame(() => fitText(word, 60, 20));
       };
       mount(view({
         color: ctx.color, cls: 'ds-play',
         body: h('div', { class: 'ds-stage' },
-          h('div', { class: 'ds-top' }, r.el, h('div', { class: 'fb-rule' }, R.emoji, ' ', R.rule), count),
+          h('div', { class: 'ds-top' }, r.el, h('div', { class: 'fb-rule' }, ic(R.icon), R.rule), count),
           box),
         actions: [
-          btn('Skip', () => { if (paused || !cur) return; bowl.splice(Math.floor(Math.random() * (bowl.length + 1)), 0, cur); cur = null; sfx.pass(); draw(); }, { kind: 'ghost', emoji: '⤴️', silent: true }),
-          btn('Got it', () => { if (paused || !cur) return; got += 1; tscores[team] += 1; cur = null; sfx.good(); buzz(40); flash('#20bf6b'); draw(); }, { emoji: '✅', silent: true }),
+          btn('Skip', () => { if (paused || !cur) return; bowl.splice(Math.floor(Math.random() * (bowl.length + 1)), 0, cur); cur = null; sfx.pass(); draw(); }, { kind: 'ghost', icon: 'arrow-forward-up', silent: true }),
+          btn('Got it', () => { if (paused || !cur) return; got += 1; tscores[team] += 1; cur = null; sfx.good(); buzz(40); flash('#20bf6b'); draw(); }, { icon: 'check', silent: true }),
         ],
       }));
       setBack(() => doPause());
@@ -188,10 +188,10 @@ export default {
         mount(view({
           color: ctx.color, back: ctx.quit, title: name,
           body: h('div', { class: 'turn-end' },
-            h('div', { class: 'te-row' }, h('span', { class: 'te-big ok' }, `✅ ${got}`)),
-            roundOver ? h('div', { class: 'fb-empty' }, '🐟 Bowl empty!') : h('div', { class: 'fb-bowl' }, '🐟 ', String(bowl.length)),
+            h('div', { class: 'te-row' }, h('span', { class: 'te-big ok' }, ic('check'), String(got))),
+            roundOver ? h('div', { class: 'fb-empty' }, ic('fish'), 'Bowl empty!') : h('div', { class: 'fb-bowl' }, ic('fish'), String(bowl.length)),
             coop ? h('div', { class: 'res-big' }, String(tscores[0])) : h('div', { class: 'teams' }, teams.map((tm, i) => teamBadge(tm, tscores[i])))),
-          actions: [btn('Next', roundOver ? roundIntro : nextTurn, { emoji: '➡️' })],
+          actions: [btn('Next', roundOver ? roundIntro : nextTurn, { icon: 'arrow-right' })],
         }));
       }
     }

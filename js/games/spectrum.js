@@ -1,14 +1,14 @@
 // Spectrum (everyone on one team): one player sees a hidden target on a scale and gives a clue.
 // The team turns the needle. Closer = more points.
-import { h, view, btn, mount, holdToPeek, enable } from '../core/ui.js';
+import { h, view, btn, mount, holdToPeek, enable, ic, avatar } from '../core/ui.js';
 import { spectrumStream } from '../core/db.js';
 import { randInt } from '../core/rng.js';
 import { sfx, buzz } from '../core/sound.js';
 import { passTo, coopResults } from '../core/flow.js';
-import { art } from '../core/tutorial.js';
+import { art, glyph } from '../core/tutorial.js';
 
 const CARDS = 7;
-const BANDS = [[14, 2], [9, 3], [4, 4]]; // within ±N points of the target → score
+const BANDS = [[14, 2], [9, 3], [4, 4]]; // [within N points of the target, score]
 const BAND_COLORS = { 2: '#ffd32a', 3: '#ff9f1c', 4: '#ff3b6b' };
 
 const pt = (cx, cy, r, deg) => [cx + r * Math.cos((deg * Math.PI) / 180), cy - r * Math.sin((deg * Math.PI) / 180)];
@@ -29,36 +29,47 @@ function bandsSvg(cx, cy, r, v) {
 const tut = {
   id: 'spectrum',
   svg: `
-    <path d="M60 150 A100 100 0 0 1 260 150 Z" fill="#fff" stroke="#1d1530" stroke-width="3"/>
-    <g transform="rotate(30 160 150)">${bandsSvg(160, 150, 98, 50)}</g>
-    <g class="a lid"><path d="M58 151 A102 102 0 0 1 262 151 Z" fill="#a55eea" stroke="#1d1530" stroke-width="3"/><text x="160" y="118" text-anchor="middle" font-size="34">❓</text></g>
-    <g class="a needle"><path d="M157 150 L160 62 L163 150 Z" fill="#1d1530"/></g>
-    <circle cx="160" cy="150" r="9" fill="#1d1530"/>
-    ${art.text('lt', 60, 172, '🥶 Cold', { fs: 15 })}${art.text('rt', 260, 172, 'Hot 🥵', { fs: 15 })}
-    ${art.person('psy', 34, 64, '#a55eea', { scale: 0.6 })}
-    ${art.emoji('eye', 34, 26, '👀', 24)}
-    ${art.bubble('clue', 104, 30, 'Soup!', { w: 64, fs: 15, tail: 'left' })}
-    ${art.text('pts', 252, 40, '+4 🎯', { fs: 22, fill: '#ff3b6b' })}
+    <path d="M82 158 A78 78 0 0 1 238 158 Z" fill="#fff" stroke="#1d1530" stroke-width="3"/>
+    <g transform="rotate(30 160 158)">${bandsSvg(160, 158, 76, 50)}</g>
+    <g class="a lid"><path d="M80 159 A80 80 0 0 1 240 159 Z" fill="#a55eea" stroke="#1d1530" stroke-width="3"/><g transform="translate(160 126)">${glyph('question-mark', 34, '#fff')}</g></g>
+    <g class="a needle"><path d="M157 158 L160 92 L163 158 Z" fill="#1d1530"/></g>
+    <circle cx="160" cy="158" r="7" fill="#1d1530"/>
+    ${art.icon('lti', 66, 180, 'snowflake', { size: 16, color: '#3867d6' })}${art.text('lt', 94, 180, 'Cold', { fs: 14 })}
+    ${art.text('rt', 228, 180, 'Hot', { fs: 14 })}${art.icon('rti', 252, 180, 'flame', { size: 16, color: '#ff5a1f' })}
+    ${art.person('psy', 34, 96, '#a55eea', { scale: 0.62 })}
+    ${art.person('t0', 268, 96, '#20bf6b', { scale: 0.56 })}
+    ${art.person('t1', 300, 96, '#ff9f1c', { scale: 0.56 })}
+    ${art.icon('eye', 34, 62, 'eye', { size: 16, color: '#fff', bg: '#1d1530' })}
+    ${art.icon('ph', 34, 132, 'device-mobile', { size: 18, color: '#fff', bg: '#1d1530' })}
+    ${art.bubble('clue', 96, 40, 'Soup!', { w: 64, fs: 15, tail: 'left' })}
+    ${art.icon('hush', 34, 62, 'message-circle-off', { size: 16, color: '#fff', bg: '#ff3b3b' })}
+    ${art.text('pts', 160, 44, '+4', { fs: 30, fill: '#ff3b6b' })}
   `,
   css: `
-    .tut-spectrum .eye, .tut-spectrum .clue, .tut-spectrum .pts { transform: scale(0); }
-    .tut-spectrum .needle { transform-origin: 50% 100%; }
-    .tut-spectrum .lid { transform-origin: 50% 100%; }
-    .tut-spectrum[data-s="0"] .lid { animation: spPeek 2.2s .3s ease-in-out both; }
+    .tut-spectrum .eye, .tut-spectrum .clue, .tut-spectrum .pts, .tut-spectrum .hush { transform: scale(0); }
+    .tut-spectrum .needle, .tut-spectrum .lid { transform-origin: 50% 100%; }
+    .tut-spectrum[data-s="0"] .lid { animation: spPeek 2.4s .3s ease-in-out both; }
     @keyframes spPeek { 0% { opacity: 1; } 25%,75% { opacity: .08; } 100% { opacity: 1; } }
     .tut-spectrum[data-s="0"] .eye { animation: tPop .35s .2s both cubic-bezier(.3,1.6,.5,1); }
+    .tut-spectrum[data-s="0"] .t0, .tut-spectrum[data-s="0"] .t1 { opacity: .3; }
     .tut-spectrum[data-s="1"] .clue { animation: tPop .35s .2s both cubic-bezier(.3,1.6,.5,1); }
-    .tut-spectrum[data-s="2"] .needle { animation: spTurn 2.2s .2s ease-in-out both; }
+    .tut-spectrum[data-s="2"] .ph { animation: spHand 1.5s .3s ease-in-out both; }
+    @keyframes spHand { 0% { transform: none; } 50% { transform: translate(118px, -60px); } 100% { transform: translate(250px, 0px); } }
+    .tut-spectrum[data-s="3"] .ph, .tut-spectrum[data-s="4"] .ph { transform: translate(250px, 0px); }
+    .tut-spectrum[data-s="3"] .needle { animation: spTurn 2.2s .2s ease-in-out both; }
     @keyframes spTurn { 0% { transform: rotate(0deg); } 40% { transform: rotate(50deg); } 70% { transform: rotate(22deg); } 100% { transform: rotate(32deg); } }
-    .tut-spectrum[data-s="3"] .needle { transform: rotate(32deg); }
-    .tut-spectrum[data-s="3"] .lid { opacity: 0; }
-    .tut-spectrum[data-s="3"] .pts { animation: tPop .4s .6s both cubic-bezier(.3,1.6,.5,1); }
+    .tut-spectrum[data-s="3"] .t0, .tut-spectrum[data-s="3"] .t1 { animation: tBounce .4s infinite alternate; }
+    .tut-spectrum[data-s="3"] .hush { animation: tPop .35s .2s both cubic-bezier(.3,1.6,.5,1); }
+    .tut-spectrum[data-s="4"] .needle { transform: rotate(32deg); }
+    .tut-spectrum[data-s="4"] .lid { opacity: 0; }
+    .tut-spectrum[data-s="4"] .pts { animation: tPop .4s .5s both cubic-bezier(.3,1.6,.5,1); }
   `,
   steps: [
-    { c: '👀 One player sees the target', t: 2800 },
-    { c: '🗣️ They say ONE clue', t: 2000 },
-    { c: '🎯 Team moves the needle', t: 2800 },
-    { c: '🎉 Closer = more points', t: 2400 },
+    { c: 'One player secretly sees the target', t: 3000 },
+    { c: 'They say ONE clue out loud', t: 2200 },
+    { c: 'Then they hand the phone to the team', t: 2400 },
+    { c: 'The team moves the needle', t: 2800 },
+    { c: 'Closer = more points', t: 2400 },
   ],
 };
 
@@ -73,7 +84,7 @@ function dial({ left, right, target = null, draggable = false, onMove }) {
     <g class="dial-needle"><path d="M${cx - 3.5} ${cy} L${cx} ${cy - r + 8} L${cx + 3.5} ${cy} Z" fill="#1d1530"/></g>
     <circle cx="${cx}" cy="${cy}" r="8" fill="#1d1530"/>
   </svg>`;
-  const labels = h('div', { class: 'dial-labels' }, h('span', null, '⬅\u00a0', left), h('span', null, right, '\u00a0➡'));
+  const labels = h('div', { class: 'dial-labels' }, h('span', null, ic('arrow-left'), left), h('span', null, right, ic('arrow-right')));
   const el = h('div', { class: 'dial-wrap' }, wrap, labels);
   const svg = wrap.querySelector('svg');
   const needle = wrap.querySelector('.dial-needle');
@@ -114,7 +125,7 @@ function dial({ left, right, target = null, draggable = false, onMove }) {
 }
 
 export default {
-  id: 'spectrum', name: 'Spectrum', emoji: '🎯', color: '#a55eea', min: 2, tut,
+  id: 'spectrum', name: 'Spectrum', icon: 'target', color: '#a55eea', min: 2, tut,
   start(ctx) {
     const P = ctx.players;
     const specs = spectrumStream();
@@ -127,24 +138,46 @@ export default {
       const psychic = P[idx % P.length];
       const [L, R] = specs.next();
       const target = randInt(5, 95);
-      passTo(ctx, psychic, () => peek());
+      const team = P.filter((p) => p !== psychic);
+      passTo(ctx, psychic, () => peek(), { note: h('span', { class: 'jx-not' }, ic('eye-off'), 'Everyone else looks away') });
 
+      // Only the clue-giver sees this.
       function peek() {
         const d = dial({ left: L, right: R, target });
-        const done = btn('Done', guessScreen, { emoji: '✅', disabled: true });
+        const done = btn('Done', handOff, { icon: 'check', disabled: true });
         mount(view({
-          color: ctx.color, back: ctx.quit, title: `${idx + 1} / ${CARDS}`,
-          body: h('div', { class: 'sp-peek' }, holdToPeek(d.el, () => enable(done, true)), h('div', { class: 'sp-tip' }, '🤫 Think of a clue')),
+          color: ctx.color, back: ctx.quit, title: psychic,
+          body: h('div', { class: 'sp-peek' }, holdToPeek(d.el, () => enable(done, true)), h('div', { class: 'sp-tip' }, ic('bulb'), 'Think of ONE clue')),
           actions: [done],
+        }));
+      }
+
+      // Clue-giver says the clue, then gives the phone away. They don't touch the needle.
+      function handOff() {
+        mount(view({
+          color: ctx.color, back: ctx.quit, title: psychic,
+          body: h('div', { class: 'sp-hand' },
+            h('div', { class: 'sp-hand-pic' },
+              h('span', { class: 'sp-hand-who' }, avatar(psychic, 'm'), h('span', { class: 'sp-hand-bubble' }, ic('message-circle'))),
+              h('span', { class: 'sp-hand-phone' }, ic('device-mobile')),
+              h('span', { class: 'sp-hand-team' }, team.map((t) => avatar(t, 'm')))),
+            h('ol', { class: 'sp-hand-steps' },
+              h('li', null, ic('message-circle'), 'Say your clue'),
+              h('li', null, ic('device-mobile'), 'Give the phone to the team'))),
+          actions: [btn('Team has it', guessScreen, { icon: 'users' })],
         }));
       }
 
       function guessScreen() {
         const d = dial({ left: L, right: R, draggable: true, onMove: () => enable(lock, true) });
-        const lock = btn('Lock in', () => reveal(d), { emoji: '🔒' });
+        const lock = btn('Lock in', () => reveal(d), { icon: 'lock' });
         mount(view({
-          color: ctx.color, back: ctx.quit, title: `${idx + 1} / ${CARDS}`,
-          body: h('div', { class: 'sp-guess' }, h('div', { class: 'sp-say' }, '🗣️ ', h('b', null, psychic), ': say a clue!'), d.el, h('div', { class: 'sp-tip' }, '👆 drag the needle')),
+          color: ctx.color, back: ctx.quit, title: 'Team',
+          body: h('div', { class: 'sp-guess' },
+            h('div', { class: 'sp-team' }, team.map((t) => avatar(t, 's'))),
+            d.el,
+            h('div', { class: 'sp-tip' }, ic('hand-finger'), 'Move the needle together'),
+            h('div', { class: 'sp-quiet' }, ic('message-circle-off'), psychic, ' stays quiet')),
           actions: [lock],
         }));
       }
@@ -158,9 +191,9 @@ export default {
         if (pts >= 3) { sfx.win(); buzz([40, 30, 80]); } else if (pts) sfx.good(); else sfx.pass();
         const ptsEl = h('div', { class: `sp-pts p${pts}` }, pts ? `+${pts}` : '0');
         mount(view({
-          color: ctx.color, back: ctx.quit, title: `⭐ ${score}`,
+          color: ctx.color, back: ctx.quit, title: `Score: ${score}`,
           body: h('div', { class: 'sp-guess' }, ptsEl, d.el),
-          actions: [btn(idx >= CARDS ? 'Results' : 'Next', next, { emoji: idx >= CARDS ? '🏁' : '➡️' })],
+          actions: [btn(idx >= CARDS ? 'Results' : 'Next', next, { icon: idx >= CARDS ? 'flag' : 'arrow-right' })],
         }));
       }
     }

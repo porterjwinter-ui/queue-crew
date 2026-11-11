@@ -1,6 +1,6 @@
 // Majority Rules: everyone answers secretly. Match the most popular answer to score.
-// If exactly one person is the odd one out, they hold the Odd Duck and can't win while holding it.
-import { h, view, btn, mount, avatar, nameTag, enable, fitText } from '../core/ui.js';
+// If exactly one person is the odd one out, they hold the Odd Sock and can't win while holding it.
+import { h, view, btn, mount, avatar, nameTag, enable, fitText, ic } from '../core/ui.js';
 import { questionStream } from '../core/db.js';
 import { groupAnswers, titleCase } from '../core/text.js';
 import { sfx } from '../core/sound.js';
@@ -17,9 +17,9 @@ const tut = {
     ${art.at(160, 26, `<g class="a q"><rect x="-70" y="-17" width="140" height="34" rx="12" fill="#20bf6b"/><text x="0" y="6" text-anchor="middle" font-size="16" font-weight="900" fill="#fff">Best pet?</text></g>`)}
     ${X.map((x, i) => art.person('p' + i, x, 132, ['#3867d6', '#ff9f1c', '#8854d0', '#e84393'][i], { scale: 0.75 })).join('')}
     ${X.map((x, i) => art.bubble('h' + i, x, 84, '?', { w: 44, fs: 18 })).join('')}
-    ${X.map((x, i) => art.bubble('a' + i, x, 84, i === 1 ? '🐱' : '🐶', { w: 44, fs: 20 })).join('')}
+    ${X.map((x, i) => art.bubble('a' + i, x, 84, '', { w: 44, icon: i === 1 ? 'cat' : 'dog' })).join('')}
     ${[0, 2, 3].map((i) => art.text('pl' + i, X[i], 62, '+1', { fs: 18, fill: '#20bf6b' })).join('')}
-    ${art.emoji('duck', 122, 60, '🦆', 34)}
+    ${art.icon('duck', 122, 58, 'sock', { size: 26, color: '#fff', bg: '#e84393' })}
   `,
   css: `
     ${['h0', 'h1', 'h2', 'h3', 'a0', 'a1', 'a2', 'a3', 'pl0', 'pl2', 'pl3', 'duck'].map((c) => `.tut-majority .${c}`).join(', ')} { transform: scale(0); }
@@ -33,22 +33,22 @@ const tut = {
     .tut-majority[data-s="3"] .p0, .tut-majority[data-s="3"] .p2, .tut-majority[data-s="3"] .p3 { opacity: .4; }
   `,
   steps: [
-    { c: '❓ A question', t: 1800 },
-    { c: '🤫 Everyone answers secretly', t: 2400 },
-    { c: '🐶 Match the most = +1', t: 2800 },
-    { c: '🦆 Odd one out gets the duck', t: 2800 },
+    { c: 'A question', t: 1800 },
+    { c: 'Everyone answers secretly', t: 2400 },
+    { c: 'Match the most = +1', t: 2800 },
+    { c: 'Odd one out gets the sock', t: 2800 },
   ],
 };
 
 export default {
-  id: 'majority', name: 'Majority Rules', emoji: '🐑', color: '#20bf6b', min: 3, tut,
+  id: 'majority', name: 'Majority Rules', icon: 'users-group', color: '#20bf6b', min: 3, tut,
   start(ctx) {
     const P = ctx.players;
     const scores = Object.fromEntries(P.map((p) => [p, 0]));
     const qs = questionStream();
     let duck = null;
     let round = 0;
-    const strip = () => scoreStrip(scores, duck ? { [duck]: '🦆' } : {});
+    const strip = () => scoreStrip(scores, duck ? { [duck]: 'sock' } : {});
     newQuestion();
 
     function newQuestion() {
@@ -59,8 +59,8 @@ export default {
       const qEl = h('div', { class: 'q-text' }, q);
       mount(view({
         color: ctx.color, back: ctx.quit, title: `Round ${round}`,
-        body: h('div', { class: 'q-card' }, h('div', { class: 'q-emoji' }, '❓'), h('div', { class: 'q-box' }, qEl), strip()),
-        actions: [btn('Answer', () => ask(), { emoji: '✍️' })],
+        body: h('div', { class: 'q-card' }, h('div', { class: 'q-ico' }, ic('help-circle')), h('div', { class: 'q-box' }, qEl), strip()),
+        actions: [btn('Answer', () => ask(), { icon: 'pencil' })],
       }));
       requestAnimationFrame(() => fitText(qEl, 46, 22));
 
@@ -72,7 +72,7 @@ export default {
 
       function answerScreen(name) {
         const input = h('input', { class: 'big-input', type: 'text', maxlength: 40, autocomplete: 'off', autocapitalize: 'sentences', enterkeyhint: 'done', placeholder: '…' });
-        const lock = btn('Lock in', () => submit(), { emoji: '🔒', disabled: true });
+        const lock = btn('Lock in', () => submit(), { icon: 'lock', disabled: true });
         input.addEventListener('input', () => enable(lock, input.value.trim().length > 0));
         input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
         function submit() {
@@ -97,7 +97,7 @@ export default {
       let groups = groupAnswers(answers);
       let selected = null;
       const list = h('div', { class: 'groups' });
-      const hint = h('div', { class: 'groups-hint' }, '👆👆 tap two to merge');
+      const hint = h('div', { class: 'groups-hint' }, ic('hand-click'), 'Tap two to merge');
 
       const outcome = () => {
         const sizes = groups.map((g) => g.items.length);
@@ -124,7 +124,7 @@ export default {
             },
           },
           h('div', { class: 'group-text' }, label),
-          h('div', { class: 'group-avs' }, g.items.map((it) => avatar(it.name, 's', it.name === odd ? h('i', { class: 'ss-badge' }, '🦆') : null))),
+          h('div', { class: 'group-avs' }, g.items.map((it) => avatar(it.name, 's', it.name === odd ? h('i', { class: 'ss-badge' }, ic('sock')) : null))),
           g === winners ? h('div', { class: 'group-plus' }, '+1') : null);
           return el;
         }));
@@ -140,7 +140,7 @@ export default {
           if (odd) duck = odd;
           sfx.good();
           afterRound();
-        }, { emoji: '⭐' })],
+        }, { icon: 'star' })],
       }));
     }
 
@@ -150,17 +150,17 @@ export default {
       mount(view({
         color: ctx.color, back: ctx.quit, title: `First to ${TARGET}`,
         body: h('div', { class: 'round-end' },
-          duck ? h('div', { class: 'round-msg' }, h('span', { class: 'duck-big' }, '🦆'), nameTag(duck)) : null,
+          duck ? h('div', { class: 'round-msg' }, h('span', { class: 'duck-big' }, ic('sock')), nameTag(duck)) : null,
           strip()),
         actions: [
-          btn('Finish', finish, { kind: 'ghost', emoji: '🏁' }),
-          btn('Next', newQuestion, { emoji: '➡️' }),
+          btn('Finish', finish, { kind: 'ghost', icon: 'flag' }),
+          btn('Next', newQuestion, { icon: 'arrow-right' }),
         ],
       }));
     }
 
     function finish() {
-      results(ctx, scores, { cantWin: duck, note: duck ? `🦆 ${duck} can't win` : null });
+      results(ctx, scores, { cantWin: duck, note: duck ? `${duck} has the Odd Sock and can't win` : null });
     }
   },
 };

@@ -1,5 +1,5 @@
 // Queue Crew — app shell: home carousel, how-to-play intros, players, scoreboard.
-import { h, view, btn, mount, initUI, avatar, confirmBox, themeVars, enable, onCleanup } from './core/ui.js';
+import { h, view, btn, mount, initUI, avatar, confirmBox, themeVars, enable, onCleanup, ic, stars } from './core/ui.js';
 import { loadDB } from './core/db.js';
 import { unlockAudio, sfx, soundOn, setSound } from './core/sound.js';
 import { store, getPlayers, setPlayers, getLevel, setLevel, getTickets, resetTickets } from './core/store.js';
@@ -20,17 +20,17 @@ import wait, { waitRunning } from './games/wait.js';
 
 const GAMES = [forehead, imposter, hotpotato, dontsayit, majority, jinx, spectrum, fishbowl, doodle, bingo, wait];
 const NO_LEVEL = new Set(['majority', 'spectrum', 'wait']);
-const LEVELS = [null, { stars: '⭐', name: 'Easy' }, { stars: '⭐⭐', name: 'Medium' }, { stars: '⭐⭐⭐', name: 'Hard' }];
+const LEVELS = ['', 'Easy', 'Medium', 'Hard'];
 const APP_COLOR = '#6c5ce7';
 
 // ---------- Home ----------
 function home() {
   const start = Math.max(0, GAMES.findIndex((g) => g.id === store.get('lastGame', GAMES[0].id)));
   let current = start;
-  const sound = h('button', { class: 'iconbtn', 'aria-label': 'Sound', onclick: () => { setSound(!soundOn()); sound.textContent = soundOn() ? '🔊' : '🔇'; sfx.tap(); } }, soundOn() ? '🔊' : '🔇');
-  const trophy = h('button', { class: 'iconbtn', 'aria-label': 'Tickets', onclick: () => { sfx.tap(); scores(); } }, '🎟️');
+  const sound = h('button', { class: 'iconbtn', 'aria-label': 'Sound', onclick: () => { setSound(!soundOn()); sound.replaceChildren(ic(soundOn() ? 'volume' : 'volume-off')); sfx.tap(); } }, ic(soundOn() ? 'volume' : 'volume-off'));
+  const trophy = h('button', { class: 'iconbtn', 'aria-label': 'Tickets', onclick: () => { sfx.tap(); scores(); } }, ic('ticket'));
   const running = waitRunning();
-  const waitChip = running ? h('button', { class: 'wait-chip', onclick: () => intro(wait, true) }, '⏱️ ', h('span', { class: 'wait-time' }, '')) : null;
+  const waitChip = running ? h('button', { class: 'wait-chip', onclick: () => intro(wait, true) }, ic('stopwatch'), h('span', { class: 'wait-time' }, '')) : null;
   if (running) {
     const tick = () => {
       const s = Math.floor((Date.now() - running.start) / 1000);
@@ -43,11 +43,11 @@ function home() {
   const car = carousel(GAMES, (g) => {
     const card = h('div', { class: 'gcard' },
       h('div', { class: 'gcard-tut' }, tutorial(g.tut, { captions: false })),
-      h('div', { class: 'gcard-name' }, h('span', { class: 'gcard-emoji' }, g.emoji), g.name));
+      h('div', { class: 'gcard-name' }, h('span', { class: 'gcard-ico' }, ic(g.icon)), g.name));
     Object.entries(themeVars(g.color)).forEach(([k, v]) => card.style.setProperty(k, v));
     return card;
   }, (g) => intro(g), { start, onChange: (i) => { current = i; playBtn.style.setProperty('--c', GAMES[i].color); playBtn.style.setProperty('--c2', themeVars(GAMES[i].color)['--c2']); playBtn.style.setProperty('--on', themeVars(GAMES[i].color)['--on']); } });
-  const playBtn = btn('Play', () => intro(GAMES[current]), { emoji: '▶️' });
+  const playBtn = btn('Play', () => intro(GAMES[current]), { icon: 'player-play' });
   const v = view({
     color: APP_COLOR, left: sound, right: trophy,
     title: h('span', { class: 'logo' }, h('span', { class: 'logo-q' }, 'Q'), 'ueue Crew'),
@@ -64,17 +64,17 @@ function home() {
 function intro(game, skipToGame) {
   store.set('lastGame', game.id);
   if (skipToGame) return launch(game, null);
-  const lvlBtn = NO_LEVEL.has(game.id) ? null : btn('', () => {
+  const lvlBtn = NO_LEVEL.has(game.id) ? null : btn(levelLabel(game, getLevel()), () => {
     const l = (getLevel() % 3) + 1;
     setLevel(l);
-    lvlBtn.querySelector('.btn-emoji').textContent = LEVELS[l].stars;
+    lvlBtn.querySelector('.stars').replaceWith(stars(l));
     lvlBtn.querySelector('.btn-label').textContent = levelLabel(game, l);
-  }, { kind: 'ghost', emoji: LEVELS[getLevel()].stars });
-  if (lvlBtn) lvlBtn.append(h('span', { class: 'btn-label' }, levelLabel(game, getLevel())));
+  }, { kind: 'ghost', cls: 'lvl' });
+  if (lvlBtn) lvlBtn.prepend(stars(getLevel()));
   mount(view({
     color: game.color, back: home, title: game.name,
     body: h('div', { class: 'intro' }, tutorial(game.tut)),
-    actions: [lvlBtn, btn('Play', () => next(), { emoji: '▶️' })],
+    actions: [lvlBtn, btn('Play', () => next(), { icon: 'player-play' })],
   }));
   function next() {
     if (game.min > 0) players(game);
@@ -84,7 +84,7 @@ function intro(game, skipToGame) {
 
 function levelLabel(game, l) {
   if (game.id === 'bingo') return ['', '3×3', '4×4', '5×5'][l];
-  return LEVELS[l].name;
+  return LEVELS[l];
 }
 
 // ---------- Who's playing ----------
@@ -92,17 +92,17 @@ function players(game) {
   let list = getPlayers();
   const chips = h('div', { class: 'pchips' });
   const input = h('input', { class: 'big-input', type: 'text', maxlength: 14, placeholder: 'Name', autocomplete: 'off', autocapitalize: 'words', enterkeyhint: 'done' });
-  const go = btn('Go', () => { setPlayers(list); modeOrLaunch(game); }, { emoji: '▶️' });
+  const go = btn('Go', () => { setPlayers(list); modeOrLaunch(game); }, { icon: 'player-play' });
   const need = h('div', { class: 'need' });
   const render = () => {
     chips.replaceChildren(...list.map((n) => h('button', {
       class: 'pchip',
       onclick: () => { list = list.filter((x) => x !== n); sfx.tap(); render(); },
-    }, avatar(n, 's'), h('span', null, n), h('span', { class: 'x' }, '✕'))));
-    if (!list.length) chips.append(h('div', { class: 'pchips-empty' }, '👥'));
+    }, avatar(n, 's'), h('span', null, n), h('span', { class: 'x' }, ic('x')))));
+    if (!list.length) chips.append(h('div', { class: 'pchips-empty' }, ic('users')));
     const ok = list.length >= game.min;
     enable(go, ok);
-    need.textContent = ok ? '' : `${game.min}+ 👥`;
+    need.replaceChildren(...(ok ? [] : [ic('users'), `${game.min}+`]));
   };
   const add = () => {
     const n = input.value.trim().replace(/\s+/g, ' ');
@@ -117,7 +117,7 @@ function players(game) {
   render();
   mount(view({
     color: game.color, back: () => intro(game), title: 'Who’s playing?',
-    body: h('div', { class: 'players' }, chips, h('div', { class: 'padd' }, input, btn('', add, { emoji: '➕', cls: 'addbtn', kind: 'ghost' })), need),
+    body: h('div', { class: 'players' }, chips, h('div', { class: 'padd' }, input, btn('', add, { icon: 'plus', cls: 'addbtn', kind: 'ghost' })), need),
     actions: [go],
   }));
   if (!list.length) setTimeout(() => input.focus(), 300);
@@ -131,7 +131,7 @@ function modeOrLaunch(game) {
     body: h('div', { class: 'modes' }, game.modes.map((m) => h('button', {
       class: 'mode',
       onclick: () => { sfx.tap(); launch(game, m.id); },
-    }, h('div', { class: 'mode-art' }, m.art.map((a) => h('span', null, a))), h('div', { class: 'mode-name' }, m.emoji, ' ', m.label)))),
+    }, h('div', { class: 'mode-art' }, m.art.map((a) => (a.startsWith('i:') ? ic(a.slice(2)) : h('span', null, a)))), h('div', { class: 'mode-name' }, ic(m.icon), m.label)))),
   }));
 }
 
@@ -143,14 +143,14 @@ function launch(game, mode) {
     name: game.name,
     mode,
     exit: home,
-    quit: () => confirmBox({ color: game.color, emoji: '🏠', text: 'Quit?', yes: 'Quit', no: 'Stay', onYes: home }),
+    quit: () => confirmBox({ color: game.color, icon: 'home', text: 'Quit?', yes: 'Quit', no: 'Stay', onYes: home }),
     again: () => launch(game, mode),
   };
   try {
     game.start(ctx);
   } catch (e) {
     console.error(e);
-    mount(view({ color: game.color, back: home, title: game.name, body: h('div', { class: 'huge-emoji' }, '😵'), actions: [btn('Home', home, { emoji: '🏠' })] }));
+    mount(view({ color: game.color, back: home, title: game.name, body: h('div', { class: 'huge-ico' }, ic('mood-sad')), actions: [btn('Home', home, { icon: 'home' })] }));
   }
 }
 
@@ -161,12 +161,12 @@ function scores() {
   mount(view({
     color: '#ffb400', back: home, title: 'Tickets',
     body: h('div', { class: 'results' },
-      h('div', { class: 'res-trophy' }, rows.length ? '👑' : '🎟️'),
+      h('div', { class: 'res-trophy' }, ic(rows.length ? 'crown' : 'ticket')),
       rows.length
         ? rows.map(([n, s], i) => h('div', { class: `res-row ${i === 0 ? 'win' : ''}` },
-          h('span', { class: 'res-medal' }, i === 0 ? '👑' : ''), avatar(n, 's'), h('span', { class: 'res-name' }, n), h('span', { class: 'res-score' }, `${s} 🎟️`)))
+          h('span', { class: 'res-medal' }, i === 0 ? ic('crown-filled', 'gold') : ''), avatar(n, 's'), h('span', { class: 'res-name' }, n), h('span', { class: 'res-score' }, String(s), ic('ticket'))))
         : h('div', { class: 'res-note' }, 'Play games to earn tickets')),
-    actions: rows.length ? [btn('Reset', () => confirmBox({ color: '#ffb400', emoji: '🗑️', text: 'Reset tickets?', onYes: () => { resetTickets(); scores(); } }), { kind: 'ghost', emoji: '🗑️' })] : [],
+    actions: rows.length ? [btn('Reset', () => confirmBox({ color: '#ffb400', icon: 'trash', text: 'Reset tickets?', onYes: () => { resetTickets(); scores(); } }), { kind: 'ghost', icon: 'trash' })] : [],
   }));
 }
 
@@ -178,7 +178,7 @@ async function boot() {
     await loadDB();
   } catch (e) {
     console.error(e);
-    mount(view({ color: APP_COLOR, title: 'Queue Crew', body: h('div', { class: 'huge-emoji' }, '📶❌'), actions: [btn('Retry', () => location.reload(), { emoji: '🔄' })] }));
+    mount(view({ color: APP_COLOR, title: 'Queue Crew', body: h('div', { class: 'huge-ico' }, ic('wifi-off')), actions: [btn('Retry', () => location.reload(), { icon: 'refresh' })] }));
     return;
   }
   home();

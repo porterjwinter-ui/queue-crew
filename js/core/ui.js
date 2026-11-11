@@ -1,5 +1,6 @@
 // Tiny DOM + screen helpers shared by every game.
 import { sfx, buzz } from './sound.js';
+import { ICONS } from './icons.js';
 
 export function h(tag, attrs, ...kids) {
   const el = document.createElement(tag);
@@ -73,7 +74,7 @@ export function textOn(hex) {
   return (r * 299 + g * 587 + b * 114) / 1000 > 165 ? '#1d1530' : '#ffffff';
 }
 
-// Mix a color toward white (f = 0 → color, 1 → white).
+// Mix a color toward white (f = 0 is the color, 1 is white).
 export function tint(hex, f) {
   const n = parseInt(hex.slice(1), 16);
   const c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v + (255 - v) * f));
@@ -84,11 +85,35 @@ export function themeVars(color) {
   return { '--c': color, '--c2': shade(color, -0.18), '--c3': shade(color, 0.38), '--c4': tint(color, 0.9), '--on': textOn(color) };
 }
 
-const ICONS = {
-  back: '<svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  pause: '<svg viewBox="0 0 24 24"><rect x="6" y="4.5" width="4" height="15" rx="1.5" fill="currentColor"/><rect x="14" y="4.5" width="4" height="15" rx="1.5" fill="currentColor"/></svg>',
-};
-export function icon(name) { return h('span', { class: 'ico', html: ICONS[name] || '' }); }
+// Icons come from Tabler Icons (MIT). js/core/icons.js holds only the ones the app uses.
+// Names ending in "-filled" use the solid version.
+const SVGNS = 'http://www.w3.org/2000/svg';
+export function iconMarkup(name) {
+  if (!(name in ICONS)) console.warn('missing icon', name);
+  return ICONS[name] || '';
+}
+export function ic(name, cls = '') {
+  const s = document.createElementNS(SVGNS, 'svg');
+  s.setAttribute('viewBox', '0 0 24 24');
+  s.setAttribute('class', `ic ${cls}`);
+  s.setAttribute('aria-hidden', 'true');
+  if (name.endsWith('-filled')) {
+    s.setAttribute('fill', 'currentColor');
+  } else {
+    s.setAttribute('fill', 'none');
+    s.setAttribute('stroke', 'currentColor');
+    s.setAttribute('stroke-width', '2');
+    s.setAttribute('stroke-linecap', 'round');
+    s.setAttribute('stroke-linejoin', 'round');
+  }
+  s.innerHTML = iconMarkup(name);
+  return s;
+}
+
+// Three stars for difficulty / ratings: n solid, the rest outlined.
+export function stars(n, cls = '') {
+  return h('span', { class: `stars ${cls}` }, [1, 2, 3].map((k) => ic(k <= n ? 'star-filled' : 'star', k <= n ? 'on' : '')));
+}
 
 // One standard screen: optional back chevron + title, a body, and up to 3 buttons.
 export function view({ color = '#6c5ce7', back, left, title, right, body, actions = [], cls = '', solid = false }) {
@@ -97,7 +122,7 @@ export function view({ color = '#6c5ce7', back, left, title, right, body, action
   Object.entries(themeVars(color)).forEach(([k, val]) => v.style.setProperty(k, val));
   if (back || left || title || right) {
     v.append(h('header', { class: 'bar' },
-      back ? h('button', { class: 'iconbtn', 'aria-label': 'Back', onclick: () => { sfx.tap(); back(); } }, icon('back')) : (left || h('span', { class: 'iconbtn-spacer' })),
+      back ? h('button', { class: 'iconbtn', 'aria-label': 'Back', onclick: () => { sfx.tap(); back(); } }, ic('chevron-left')) : (left || h('span', { class: 'iconbtn-spacer' })),
       h('div', { class: 'bar-title' }, title || ''),
       right || h('span', { class: 'iconbtn-spacer' })
     ));
@@ -108,11 +133,11 @@ export function view({ color = '#6c5ce7', back, left, title, right, body, action
   return v;
 }
 
-// A big tappable button. emoji goes on top, label underneath.
+// A big tappable button: icon on top, short label underneath.
 export function btn(label, onTap, opts = {}) {
-  const { kind = 'primary', emoji, disabled, cls = '', hold } = opts;
-  const b = h('button', { class: `btn ${kind} ${cls}`, disabled: disabled || null },
-    emoji ? h('span', { class: 'btn-emoji' }, emoji) : null,
+  const { kind = 'primary', icon, disabled, cls = '' } = opts;
+  const b = h('button', { class: `btn ${kind} ${cls}`, disabled: disabled || null, 'aria-label': label || icon },
+    icon ? h('span', { class: 'btn-ico' }, ic(icon)) : null,
     label ? h('span', { class: 'btn-label' }, label) : null);
   let busy = false;
   b.addEventListener('click', (e) => {
@@ -140,16 +165,16 @@ export function closeOverlay() { if (overlayEl) { overlayEl.remove(); overlayEl 
 
 export function pauseMenu({ color, onResume, onQuit }) {
   overlay(h('div', { class: 'stack center' },
-    h('div', { class: 'huge-emoji' }, '⏸️'),
+    h('div', { class: 'huge-ico' }, ic('player-pause')),
     h('div', { class: 'actions n2 inline' },
-      btn('Quit', () => { closeOverlay(); onQuit(); }, { kind: 'ghost', emoji: '🏠' }),
-      btn('Go', () => { closeOverlay(); onResume(); }, { emoji: '▶️' }))
+      btn('Quit', () => { closeOverlay(); onQuit(); }, { kind: 'ghost', icon: 'home' }),
+      btn('Go', () => { closeOverlay(); onResume(); }, { icon: 'player-play' }))
   ), { color });
 }
 
-export function confirmBox({ color, emoji = '❓', text, yes = 'Yes', no = 'No', onYes }) {
+export function confirmBox({ color, icon = 'help-circle', text, yes = 'Yes', no = 'No', onYes }) {
   overlay(h('div', { class: 'stack center' },
-    h('div', { class: 'huge-emoji' }, emoji),
+    h('div', { class: 'huge-ico' }, ic(icon)),
     text ? h('div', { class: 'overlay-text' }, text) : null,
     h('div', { class: 'actions n2 inline' },
       btn(no, () => closeOverlay(), { kind: 'ghost' }),
@@ -220,7 +245,7 @@ export function nameTag(name, extra) {
 // Press-and-hold to reveal a secret. Calls onSeen() the first time.
 export function holdToPeek(secret, onSeen) {
   let seen = false;
-  const front = h('div', { class: 'peek-front' }, h('div', { class: 'peek-hand' }, '👆'), h('div', { class: 'peek-ring' }));
+  const front = h('div', { class: 'peek-front' }, h('div', { class: 'peek-hand' }, ic('hand-finger')), h('div', { class: 'peek-ring' }));
   const back = h('div', { class: 'peek-back' }, secret);
   const box = h('div', { class: 'peek' }, front, back);
   const show = (e) => { e.preventDefault(); box.classList.add('open'); if (!seen) { seen = true; onSeen && onSeen(); } };

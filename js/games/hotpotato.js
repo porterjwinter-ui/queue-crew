@@ -1,5 +1,5 @@
 // Hot Potato: say a word, pass the phone. A hidden fuse goes off — whoever holds it gets a strike.
-import { h, view, btn, mount, nameTag, pauseMenu, setBack, keepAwake, onCleanup, closeOverlay, flash } from '../core/ui.js';
+import { h, view, btn, mount, nameTag, pauseMenu, setBack, keepAwake, onCleanup, closeOverlay, flash, ic } from '../core/ui.js';
 import { hotWordStream, letterChunk } from '../core/db.js';
 import { randInt } from '../core/rng.js';
 import { timer, onHidden } from '../core/timer.js';
@@ -20,8 +20,8 @@ const tut = {
     ${art.at(52, 120, potatoSvg('pot'))}
     ${art.bubble('say1', 52, 64, 'Banana!', { w: 78, fs: 14 })}
     ${art.bubble('say2', 124, 64, 'Bagel!', { w: 70, fs: 14 })}
-    ${art.emoji('heat', 196, 70, '🔥', 34)}
-    ${art.emoji('boom', 196, 112, '💥', 80)}
+    ${art.icon('heat', 196, 70, 'flame', { size: 34, color: '#ff5a1f' })}
+    ${art.icon('boom', 196, 112, 'boom', { size: 64, color: '#fff', bg: '#ff3b1f' })}
     ${art.cross('x', 196, 62, 18)}
   `,
   css: `
@@ -45,10 +45,10 @@ const tut = {
     .tut-hotpotato[data-s="3"] .p2 { animation: tShake .35s .3s 3; }
   `,
   steps: [
-    { c: '🥔 Pass the phone around', t: 2600 },
-    { c: '💬 Say a word, then pass!', t: 2800 },
-    { c: '🔥 It gets hotter…', t: 2400 },
-    { c: '💥 BOOM = a strike. 3 = out', t: 2600 },
+    { c: 'Pass the phone around', t: 2600 },
+    { c: 'Say a word, then pass!', t: 2800 },
+    { c: 'It gets hotter…', t: 2400 },
+    { c: 'BOOM = a strike. 3 = out', t: 2600 },
   ],
 };
 
@@ -59,10 +59,10 @@ function mix(a, b, f) {
 }
 
 export default {
-  id: 'hotpotato', name: 'Hot Potato', emoji: '🥔', color: '#ff9f1c', min: 2, tut,
+  id: 'hotpotato', name: 'Hot Potato', icon: 'flame', color: '#ff9f1c', min: 2, tut,
   modes: [
-    { id: 'words', label: 'Describe', emoji: '💬', art: ['🍌', '→', '🗣️'] },
-    { id: 'letters', label: 'Letters', emoji: '🔤', art: ['CH', '→', '🧀'] },
+    { id: 'words', label: 'Describe', icon: 'message-circle', art: ['i:cards', 'i:arrow-right', 'i:message-circle'] },
+    { id: 'letters', label: 'Letters', icon: 'abc', art: ['CH', 'i:arrow-right', 'i:cheese'] },
   ],
   start(ctx) {
     const P = ctx.players;
@@ -77,17 +77,17 @@ export default {
     newRound();
 
     function newRound() {
-      if (alive().length <= 1) return results(ctx, strikes, { lowWins: true, note: '💥 fewest strikes wins' });
+      if (alive().length <= 1) return results(ctx, strikes, { lowWins: true, note: 'Fewest strikes wins' });
       round += 1;
       if (round > 1 || out.has(P[holder])) holder = nextIdx(holder);
       const chunk = letters ? letterChunk(ctx.level) : null;
       mount(view({
         color: ctx.color, back: ctx.quit, title: `Round ${round}`,
         body: h('div', { class: 'hp-intro' },
-          chunk ? chunkView(chunk) : h('div', { class: 'hp-big-emoji' }, '🥔'),
+          chunk ? chunkView(chunk) : h('div', { class: 'hp-big-ico' }, ic('flame')),
           h('div', { class: 'hp-first' }, nameTag(P[holder]), h('span', null, ' starts')),
-          scoreStrip(strikes, Object.fromEntries([...out].map((p) => [p, '❌'])))),
-        actions: [btn('Light it', () => play(chunk), { emoji: '🔥' })],
+          scoreStrip(strikes, Object.fromEntries([...out].map((p) => [p, 'x'])))),
+        actions: [btn('Light it', () => play(chunk), { icon: 'flame' })],
       }));
     }
 
@@ -113,8 +113,8 @@ export default {
       const setWho = () => { who.replaceChildren(nameTag(P[holder])); };
       const newWord = () => { if (words) word.textContent = words.next().w; };
 
-      const passBtn = btn(letters ? 'Said one!' : 'Got it', () => pass(), { emoji: '✅', silent: true });
-      const skipBtn = letters ? null : btn('Skip', () => { newWord(); sfx.pass(); }, { kind: 'ghost', emoji: '⤴️' });
+      const passBtn = btn(letters ? 'Said one!' : 'Got it', () => pass(), { icon: 'check', silent: true });
+      const skipBtn = letters ? null : btn('Skip', () => { newWord(); sfx.pass(); }, { kind: 'ghost', icon: 'arrow-forward-up' });
 
       const scr = view({
         color: ctx.color, cls: 'hp-play',
@@ -175,11 +175,11 @@ export default {
         mount(view({
           color: '#ff3b3b', back: ctx.quit, title: '',
           body: h('div', { class: 'hp-boom' },
-            h('div', { class: 'hp-boom-emoji' }, midAir ? '😅' : '💥'),
+            h('div', { class: 'hp-boom-ico' }, ic(midAir ? 'mood-surprised' : 'boom')),
             midAir ? h('div', { class: 'hp-boom-text' }, 'Mid-air! No strike') : nameTag(name),
-            midAir ? null : h('div', { class: 'hp-strikes' }, [0, 1, 2].map((k) => h('span', { class: k < strikes[name] ? 'on' : '' }, '❌'))),
+            midAir ? null : h('div', { class: 'hp-strikes' }, [0, 1, 2].map((k) => h('span', { class: k < strikes[name] ? 'on' : '' }, ic('circle-x')))),
             out.has(name) && !midAir ? h('div', { class: 'hp-boom-text' }, 'Out!') : null),
-          actions: [btn('Next', newRound, { emoji: '➡️' })],
+          actions: [btn('Next', newRound, { icon: 'arrow-right' })],
         }));
       }
     }

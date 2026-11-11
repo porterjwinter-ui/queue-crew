@@ -1,5 +1,5 @@
 // Imposter: everyone gets the secret word except one player. One-word clues, then point and vote.
-import { h, view, btn, mount, holdToPeek, avatar, nameTag, enable } from '../core/ui.js';
+import { h, view, btn, mount, holdToPeek, avatar, nameTag, enable, ic } from '../core/ui.js';
 import { imposterRound } from '../core/db.js';
 import { randInt } from '../core/rng.js';
 import { passTo, results, scoreStrip } from '../core/flow.js';
@@ -12,11 +12,11 @@ const tut = {
   svg: `
     ${X.map((x, i) => art.person('p' + i, x, 122, ['#3867d6', '#20bf6b', '#8854d0', '#ff9f1c'][i], { scale: 0.78 })).join('')}
     <g transform="translate(198 122)"><g class="a glow"><circle r="34" fill="#ff3b3b" opacity=".25"/></g></g>
-    ${X.map((x, i) => art.bubble('t' + i, x, 70, i === 2 ? '❓' : '🍕', { w: 46, fs: 20 })).join('')}
+    ${X.map((x, i) => art.bubble('t' + i, x, 70, '', { w: 46, icon: i === 2 ? 'question-mark' : 'pizza', iconColor: i === 2 ? '#ff3b3b' : '#1d1530' })).join('')}
     ${['Cheese', 'Slice', 'Round?', 'Crust'].map((w, i) => art.bubble('s' + i, X[i], 70, w, { w: 70, fs: 13 })).join('')}
-    ${art.emoji('spy', 198, 110, '🕵️', 30)}
-    ${art.emoji('pt0', 80, 120, '👉', 24)}${art.emoji('pt1', 154, 120, '👉', 24)}${art.emoji('pt3', 240, 120, '👈', 24)}
-    ${art.emoji('bang', 198, 64, '❗', 40)}
+    ${art.icon('spy', 198, 110, 'spy', { size: 30, color: '#fff', bg: '#1d1530' })}
+    ${art.icon('pt0', 82, 120, 'arrow-right', { size: 26, color: '#ff3b3b' })}${art.icon('pt1', 156, 120, 'arrow-right', { size: 26, color: '#ff3b3b' })}${art.icon('pt3', 240, 120, 'arrow-left', { size: 26, color: '#ff3b3b' })}
+    ${art.icon('bang', 198, 64, 'alert-circle', { size: 34, color: '#fff', bg: '#ff3b3b' })}
   `,
   css: `
     ${['t0', 't1', 't2', 't3', 's0', 's1', 's2', 's3'].map((c) => `.tut-imposter .${c}`).join(', ')}, .tut-imposter .spy, .tut-imposter .glow,
@@ -34,19 +34,19 @@ const tut = {
     .tut-imposter[data-s="4"] .p0, .tut-imposter[data-s="4"] .p1, .tut-imposter[data-s="4"] .p3 { animation: tBounce .45s infinite alternate; }
   `,
   steps: [
-    { c: '🤫 Everyone sees the word…', t: 2600 },
-    { c: '🕵️ …except the imposter', t: 2400 },
-    { c: '🗣️ Say ONE word each', t: 3000 },
-    { c: '👉 Point at the imposter', t: 2400 },
-    { c: '🎉 Caught!', t: 2000 },
+    { c: 'Everyone sees the word…', t: 2600 },
+    { c: '…except the imposter', t: 2400 },
+    { c: 'Say ONE word each', t: 3000 },
+    { c: 'Point at the imposter', t: 2400 },
+    { c: 'Caught!', t: 2000 },
   ],
 };
 
 export default {
-  id: 'imposter', name: 'Imposter', emoji: '🕵️', color: '#8854d0', min: 3, tut,
+  id: 'imposter', name: 'Imposter', icon: 'spy', color: '#8854d0', min: 3, tut,
   modes: [
-    { id: 'classic', label: 'Classic', emoji: '🕵️', art: ['🍕', '🍕', '❓'] },
-    { id: 'sneaky', label: 'Sneaky', emoji: '🎭', art: ['🍕', '🍕', '🍔'] },
+    { id: 'classic', label: 'Classic', icon: 'spy', art: ['i:pizza', 'i:pizza', 'i:question-mark'] },
+    { id: 'sneaky', label: 'Sneaky', icon: 'masks-theater', art: ['i:pizza', 'i:pizza', 'i:burger'] },
   ],
   start(ctx) {
     const P = ctx.players;
@@ -64,10 +64,10 @@ export default {
       mount(view({
         color: ctx.color, back: ctx.quit, title: `Round ${round}`,
         body: h('div', { class: 'topic' },
-          h('div', { class: 'topic-emoji' }, r.emoji),
+          h('div', { class: 'topic-ico' }, ic(r.icon)),
           h('div', { class: 'topic-label' }, 'Topic'),
           h('div', { class: 'topic-name' }, r.topic)),
-        actions: [btn('Deal', () => deal(), { emoji: '🃏' })],
+        actions: [btn('Deal', () => deal(), { icon: 'cards' })],
       }));
 
       function deal() {
@@ -79,11 +79,11 @@ export default {
       function peek(name, isSpy) {
         let secret;
         if (isSpy && !sneaky) {
-          secret = h('div', { class: 'secret spy' }, h('div', { class: 'secret-emoji' }, '🕵️'), h('div', null, 'Imposter!'), h('small', null, r.topic));
+          secret = h('div', { class: 'secret spy' }, h('div', { class: 'secret-ico' }, ic('spy')), h('div', null, 'Imposter!'), h('small', null, r.topic));
         } else {
           secret = h('div', { class: 'secret' }, h('div', { class: 'secret-word' }, isSpy ? r.decoy : r.word));
         }
-        const done = btn('Done', () => { i += 1; deal(); }, { emoji: '✅', disabled: true });
+        const done = btn('Done', () => { i += 1; deal(); }, { icon: 'check', disabled: true });
         mount(view({
           color: ctx.color, back: ctx.quit, title: name,
           body: holdToPeek(secret, () => enable(done, true)),
@@ -97,10 +97,10 @@ export default {
         mount(view({
           color: ctx.color, back: ctx.quit, title: r.topic,
           body: h('div', { class: 'talk' },
-            h('div', { class: 'talk-icon' }, '🗣️'),
+            h('div', { class: 'talk-icon' }, ic('message-circle')),
             h('div', { class: 'talk-rule' }, 'ONE word each'),
-            h('div', { class: 'talk-order' }, order.map((n, k) => h('span', { class: 'talk-step' }, avatar(n, 'm'), k < order.length - 1 ? h('i', null, '→') : null)))),
-          actions: [btn('Vote', vote, { emoji: '👉' })],
+            h('div', { class: 'talk-order' }, order.map((n, k) => h('span', { class: 'talk-step' }, avatar(n, 'm'), k < order.length - 1 ? ic('chevron-right', 'talk-arrow') : null)))),
+          actions: [btn('Vote', vote, { icon: 'hand-finger-right' })],
         }));
       }
 
@@ -109,7 +109,7 @@ export default {
         const num = h('div', { class: 'vote-num' }, '3');
         mount(view({
           color: ctx.color, back: ctx.quit, title: 'Vote',
-          body: h('div', { class: 'vote' }, num, h('div', { class: 'vote-hand' }, '👉')),
+          body: h('div', { class: 'vote' }, num, h('div', { class: 'vote-hand' }, ic('hand-finger-right'))),
         }));
         sfx.count();
         const id = setInterval(() => {
@@ -129,8 +129,8 @@ export default {
             avatar(spyName, 'xl'), h('div', { class: 'pass-name' }, spyName),
             h('div', { class: 'reveal-q' }, 'Caught?')),
           actions: [
-            btn('Escaped', () => { scores[spyName] += 2; sfx.pass(); after('🏃 +2', spyName); }, { kind: 'ghost', emoji: '🏃' }),
-            btn('Caught', () => guess(spyName), { emoji: '🎯' }),
+            btn('Escaped', () => { scores[spyName] += 2; sfx.pass(); after('+2', spyName, 'run'); }, { kind: 'ghost', icon: 'run' }),
+            btn('Caught', () => guess(spyName), { icon: 'target' }),
           ],
         }));
       }
@@ -139,26 +139,26 @@ export default {
         mount(view({
           color: ctx.color, back: ctx.quit, title: spyName,
           body: h('div', { class: 'reveal' },
-            h('div', { class: 'reveal-emoji' }, '🤔'),
+            h('div', { class: 'reveal-ico' }, ic('bulb')),
             h('div', { class: 'reveal-q' }, 'Guess the word!'),
             holdToPeek(h('div', { class: 'secret' }, h('div', { class: 'secret-word' }, r.word)))),
           actions: [
-            btn('Wrong', () => { P.forEach((p) => { if (p !== spyName) scores[p] += 1; }); sfx.good(); after('🎯 +1 each', null); }, { kind: 'ghost', emoji: '❌' }),
-            btn('Right', () => { scores[spyName] += 1; sfx.pass(); after('😎 +1', spyName); }, { emoji: '✅' }),
+            btn('Wrong', () => { P.forEach((p) => { if (p !== spyName) scores[p] += 1; }); sfx.good(); after('+1 each', null, 'target'); }, { kind: 'ghost', icon: 'x' }),
+            btn('Right', () => { scores[spyName] += 1; sfx.pass(); after('+1', spyName, 'mood-crazy-happy'); }, { icon: 'check' }),
           ],
         }));
       }
 
-      function after(msg, who) {
+      function after(msg, who, icon) {
         mount(view({
           color: ctx.color, back: ctx.quit, title: `Round ${round}`,
           body: h('div', { class: 'round-end' },
-            h('div', { class: 'secret small' }, h('div', { class: 'secret-word' }, r.word), sneaky ? h('small', null, `🎭 ${r.decoy}`) : null),
-            h('div', { class: 'round-msg' }, who ? nameTag(who) : null, h('b', null, msg)),
+            h('div', { class: 'secret small' }, h('div', { class: 'secret-word' }, r.word), sneaky ? h('small', null, ic('masks-theater'), r.decoy) : null),
+            h('div', { class: 'round-msg' }, ic(icon), who ? nameTag(who) : null, h('b', null, msg)),
             scoreStrip(scores)),
           actions: [
-            btn('Finish', () => results(ctx, scores), { kind: 'ghost', emoji: '🏁' }),
-            btn('Next', newRound, { emoji: '➡️' }),
+            btn('Finish', () => results(ctx, scores), { kind: 'ghost', icon: 'flag' }),
+            btn('Next', newRound, { icon: 'arrow-right' }),
           ],
         }));
       }

@@ -1,5 +1,5 @@
 // Jinx (everyone on one team): each player writes a one-word clue. Matching clues cancel out!
-import { h, view, btn, mount, avatar, enable, fitText } from '../core/ui.js';
+import { h, view, btn, mount, avatar, enable, fitText, ic } from '../core/ui.js';
 import { jinxStream } from '../core/db.js';
 import { sameAnswer, containsWord, titleCase } from '../core/text.js';
 import { sfx, buzz } from '../core/sound.js';
@@ -17,9 +17,9 @@ const tut = {
   id: 'jinx',
   svg: `
     ${art.person('gs', 56, 112, '#3867d6', { scale: 0.85 })}
-    ${art.emoji('eyes', 56, 104, '🙈', 30)}
+    ${art.icon('eyes', 56, 104, 'eye-off', { size: 24, color: '#fff', bg: '#1d1530' })}
     ${[178, 232, 286].map((x, i) => art.person('c' + i, x, 136, ['#20bf6b', '#ff9f1c', '#e84393'][i], { scale: 0.62 })).join('')}
-    ${art.emoji('dog', 232, 40, '🐶', 30)}
+    ${art.icon('dog', 232, 40, 'dog', { size: 30 })}
     ${clueCard('k0', 178, 94, 'bark')}${clueCard('k1', 232, 94, 'pet')}${clueCard('k2', 286, 94, 'bark')}
     ${art.bubble('say', 124, 84, 'Dog!', { w: 64, fs: 16, tail: 'left' })}
     ${art.check('ok', 172, 84, 15)}
@@ -42,15 +42,15 @@ const tut = {
     .tut-jinx[data-s="3"] .gs { animation: tBounce .4s 1.4s 3 alternate; }
   `,
   steps: [
-    { c: '🙈 Guesser looks away', t: 2200 },
-    { c: '✍️ Everyone writes ONE word', t: 2600 },
-    { c: '💥 Same word? Both cancel!', t: 2600 },
-    { c: '🎯 Guess the word!', t: 2800 },
+    { c: 'Guesser looks away', t: 2200 },
+    { c: 'Everyone writes ONE word', t: 2600 },
+    { c: 'Same word? Both cancel!', t: 2600 },
+    { c: 'Guess the word!', t: 2800 },
   ],
 };
 
 export default {
-  id: 'jinx', name: 'Jinx', emoji: '👯', color: '#3867d6', min: 3, tut,
+  id: 'jinx', name: 'Jinx', icon: 'cards', color: '#3867d6', min: 3, tut,
   start(ctx) {
     const P = ctx.players;
     const words = jinxStream(ctx.level);
@@ -60,7 +60,7 @@ export default {
     nextCard();
 
     function deckBadge() {
-      return h('div', { class: 'deck-badge' }, h('span', null, '🃏'), h('b', null, String(left)), h('span', { class: 'deck-score' }, `⭐ ${score}`));
+      return h('div', { class: 'deck-badge' }, ic('cards'), h('b', null, String(left)), h('span', { class: 'deck-score' }, ic('star-filled', 'gold'), String(score)));
     }
 
     function nextCard() {
@@ -73,24 +73,24 @@ export default {
 
       mount(view({
         color: ctx.color, back: ctx.quit, title: 'Jinx',
-        body: h('div', { class: 'jx-guesser' }, deckBadge(), avatar(guesser, 'xl'), h('div', { class: 'pass-name' }, guesser), h('div', { class: 'jx-look' }, '🙈 Look away!')),
-        actions: [btn('Clues', () => ask(), { emoji: '✍️' })],
+        body: h('div', { class: 'jx-guesser' }, deckBadge(), avatar(guesser, 'xl'), h('div', { class: 'pass-name' }, guesser), h('div', { class: 'jx-look' }, ic('eye-off'), 'Look away!')),
+        actions: [btn('Clues', () => ask(), { icon: 'pencil' })],
       }));
 
       function ask() {
         if (i >= givers.length) return check();
         const name = givers[i];
-        passTo(ctx, name, () => write(name), { note: h('span', { class: 'jx-not' }, '🙈 ', guesser) });
+        passTo(ctx, name, () => write(name), { note: h('span', { class: 'jx-not' }, ic('eye-off'), guesser) });
       }
 
       function write(name) {
         const input = h('input', { class: 'big-input', type: 'text', maxlength: 24, autocomplete: 'off', autocapitalize: 'none', enterkeyhint: 'done', placeholder: '1 word' });
-        const lock = btn('Lock in', () => submit(), { emoji: '🔒', disabled: true });
+        const lock = btn('Lock in', () => submit(), { icon: 'lock', disabled: true });
         const warn = h('div', { class: 'warn' });
         input.addEventListener('input', () => {
           const v = input.value.trim();
           const multi = /\s/.test(v);
-          warn.textContent = multi ? '☝️ ONE word' : '';
+          warn.textContent = multi ? 'ONE word only' : '';
           enable(lock, v.length > 0 && !multi);
         });
         input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
@@ -128,9 +128,9 @@ export default {
         }, h('span', { class: 'clue-text' }, c.text), c.cancel ? h('span', { class: 'stamp' }, 'JINX') : null, avatar(c.name, 'xs'))));
         render();
         mount(view({
-          color: ctx.color, back: ctx.quit, title: '🙈 ' + guesser,
-          body: h('div', { class: 'jx-check' }, h('div', { class: 'secret small' }, h('div', { class: 'secret-word' }, word)), grid, h('div', { class: 'groups-hint' }, '👆 tap to cancel')),
-          actions: [btn('Show', () => passTo(ctx, guesser, () => guess()), { emoji: '👀' })],
+          color: ctx.color, back: ctx.quit, title: guesser + ' looks away',
+          body: h('div', { class: 'jx-check' }, h('div', { class: 'secret small' }, h('div', { class: 'secret-word' }, word)), grid, h('div', { class: 'groups-hint' }, ic('hand-click'), 'Tap to cancel')),
+          actions: [btn('Show', () => passTo(ctx, guesser, () => guess()), { icon: 'eye' })],
         }));
       }
 
@@ -141,11 +141,11 @@ export default {
           body: h('div', { class: 'jx-guess' }, deckBadge(),
             kept.length
               ? h('div', { class: 'clues big' }, kept.map((c) => h('div', { class: 'clue' }, h('span', { class: 'clue-text' }, titleCase(c.text)))))
-              : h('div', { class: 'jx-empty' }, '💥 All jinxed!'),
-            h('div', { class: 'jx-say' }, '🗣️ Say your guess')),
+              : h('div', { class: 'jx-empty' }, ic('boom'), 'All jinxed!'),
+            h('div', { class: 'jx-say' }, ic('message-circle'), 'Say your guess')),
           actions: [
-            btn('Pass', () => { left -= 1; sfx.pass(); done(null); }, { kind: 'ghost', emoji: '⤴️' }),
-            btn('Reveal', () => judge(), { emoji: '👀' }),
+            btn('Pass', () => { left -= 1; sfx.pass(); done(null); }, { kind: 'ghost', icon: 'arrow-forward-up' }),
+            btn('Reveal', () => judge(), { icon: 'eye' }),
           ],
         }));
       }
@@ -155,8 +155,8 @@ export default {
           color: ctx.color, back: ctx.quit, title: guesser,
           body: h('div', { class: 'jx-guess' }, h('div', { class: 'secret' }, h('div', { class: 'secret-word' }, word))),
           actions: [
-            btn('Missed', () => { left -= 2; sfx.buzzer(); done(false); }, { kind: 'ghost', emoji: '❌' }),
-            btn('Got it', () => { left -= 1; score += 1; sfx.good(); done(true); }, { emoji: '✅' }),
+            btn('Missed', () => { left -= 2; sfx.buzzer(); done(false); }, { kind: 'ghost', icon: 'x' }),
+            btn('Got it', () => { left -= 1; score += 1; sfx.good(); done(true); }, { icon: 'check' }),
           ],
         }));
       }

@@ -1,5 +1,5 @@
 // Forehead: phone on your head, friends give clues, nod down = got it, tilt up = skip.
-import { h, view, btn, mount, fitText, pauseMenu, keepAwake, onCleanup, setBack, sleep, closeOverlay } from '../core/ui.js';
+import { h, view, btn, mount, fitText, pauseMenu, keepAwake, onCleanup, setBack, sleep, closeOverlay, ic } from '../core/ui.js';
 import { decks, deckStream } from '../core/db.js';
 import { requestMotion, watchUp, tiltDetector, screenFix, isUpright } from '../core/tilt.js';
 import { timer, onHidden } from '../core/timer.js';
@@ -32,9 +32,9 @@ const tut = {
     ${art.bubble('b1', 62, 52, 'Meow!', { w: 72 })}
     ${art.bubble('b2', 258, 52, 'Purrs!', { w: 72 })}
     ${art.check('ok', 160, 26, 18)}
-    ${art.emoji('skip', 160, 26, '⤴️', 34)}
-    ${art.emoji('arrDown', 222, 88, '⬇️', 28)}
-    ${art.emoji('arrUp', 222, 88, '⬆️', 28)}
+    ${art.icon('skip', 160, 26, 'arrow-forward-up', { size: 22, color: '#fff', bg: '#ff9f1c' })}
+    ${art.icon('arrDown', 222, 88, 'arrow-down', { size: 30, color: '#20bf6b' })}
+    ${art.icon('arrUp', 222, 88, 'arrow-up', { size: 30, color: '#ff9f1c' })}
     ${art.text('plus', 196, 22, '+1', { fs: 20, fill: '#20bf6b' })}
     <g transform="translate(290 30)"><g class="a clk">
       <circle r="18" fill="#fff" stroke="#1d1530" stroke-width="3"/>
@@ -66,16 +66,16 @@ const tut = {
     .tut-forehead[data-s="4"] .f1, .tut-forehead[data-s="4"] .f2 { animation: tBounce .5s infinite alternate; }
   `,
   steps: [
-    { c: '📱 Phone on your head', t: 2600 },
-    { c: '🗣️ Friends give clues', t: 2600 },
-    { c: '⬇️ Nod = got it!', t: 2600 },
-    { c: '⬆️ Tilt up = skip', t: 2600 },
-    { c: '⏱️ 60 seconds. Go!', t: 2400 },
+    { c: 'Phone on your head', t: 2600 },
+    { c: 'Friends give clues', t: 2600 },
+    { c: 'Nod = got it!', t: 2600 },
+    { c: 'Tilt up = skip', t: 2600 },
+    { c: '60 seconds. Go!', t: 2400 },
   ],
 };
 
 export default {
-  id: 'forehead', name: 'Forehead', emoji: '🤔', color: '#ff5a5f', min: 2, tut,
+  id: 'forehead', name: 'Forehead', icon: 'device-mobile-rotated', color: '#ff5a5f', min: 2, tut,
   start(ctx) {
     const scores = Object.fromEntries(ctx.players.map((p) => [p, 0]));
     let turn = 0;
@@ -89,9 +89,9 @@ export default {
       mount(view({
         color: ctx.color, back: ctx.exit, title: 'Pick a deck',
         body: carousel(list, (d) => h('div', { class: 'dcard' },
-          h('div', { class: 'deck-emoji' }, d.emoji),
+          h('div', { class: 'deck-ico' }, ic(d.icon)),
           h('div', { class: 'deck-name' }, d.name),
-          d.act ? h('div', { class: 'deck-hint' }, d.id === 'sounds' ? '🔊 sound it' : '🤸 act it') : null,
+          d.act ? h('div', { class: 'deck-hint' }, ic(d.id === 'sounds' ? 'volume' : 'run'), d.id === 'sounds' ? 'sound it' : 'act it') : null,
         ), (d) => { deck = d; words = deckStream(d.id, ctx.level); nextTurn(); }),
       }));
     }
@@ -102,7 +102,7 @@ export default {
       passTo(ctx, name, () => {
         // Must be called directly inside the tap so iPhone shows its motion prompt.
         requestMotion().then((ok) => placeOnHead(name, ok));
-      }, { label: 'Ready', emoji: '🤔' });
+      }, { label: 'Ready', icon: 'device-mobile-rotated' });
     }
 
     // "Put it on your forehead" — starts by itself once the phone is upright and still.
@@ -114,12 +114,12 @@ export default {
 
       const sub = h('div', { class: 'fh-place-sub' }, motionOk ? 'Hold it sideways' : 'Tap Go');
       const hint = h('div', { class: 'fh-place' },
-        h('div', { class: 'fh-place-anim' }, h('span', { class: 'fh-head' }, '🙂'), h('span', { class: 'fh-phone' }, '📱')),
+        h('div', { class: 'fh-place-anim' }, h('span', { class: 'fh-head' }, ic('mood-smile')), h('span', { class: 'fh-phone' }, ic('device-mobile-rotated'))),
         h('div', { class: 'fh-place-text' }, 'On your forehead!'),
         sub);
       mount(view({
         color: ctx.color, back: ctx.quit, title: name, body: hint,
-        actions: [btn('Go', () => begin(), { emoji: '▶️' })],
+        actions: [btn('Go', () => begin(), { icon: 'player-play' })],
       }));
       // Sideways + standing up for a moment = it's on someone's head. Start automatically.
       // Listen even if the permission ask failed: some browsers deliver motion without asking.
@@ -151,12 +151,12 @@ export default {
       const timeEl = h('div', { class: 'fh-time' }, String(ROUND));
       const wordEl = h('div', { class: 'fh-word' });
       const wordBox = h('div', { class: 'fh-wordbox' }, wordEl);
-      const hintEl = h('div', { class: 'fh-hint' }, deck.act ? (deck.id === 'sounds' ? '🔊 SOUND IT' : '🤸 ACT IT') : '');
+      const hintEl = h('div', { class: 'fh-hint' }, deck.act ? [ic(deck.id === 'sounds' ? 'volume' : 'run'), deck.id === 'sounds' ? 'SOUND IT' : 'ACT IT'] : null);
       const scoreEl = h('div', { class: 'fh-score' }, '0');
       const fb = h('div', { class: 'fh-fb' });
-      const pauseBtn = h('button', { class: 'fh-pause', 'aria-label': 'Pause', onclick: (e) => { e.stopPropagation(); doPause(); } }, '⏸');
-      const left = h('div', { class: 'fh-zone left', onclick: () => answer(false) }, h('span', null, '⤴'));
-      const right = h('div', { class: 'fh-zone right', onclick: () => answer(true) }, h('span', null, '✓'));
+      const pauseBtn = h('button', { class: 'fh-pause', 'aria-label': 'Pause', onclick: (e) => { e.stopPropagation(); doPause(); } }, ic('player-pause'));
+      const left = h('div', { class: 'fh-zone left', onclick: () => answer(false) }, h('span', null, ic('arrow-forward-up')));
+      const right = h('div', { class: 'fh-zone right', onclick: () => answer(true) }, h('span', null, ic('check')));
       const stage = h('div', { class: 'fh-stage' }, left, right, h('div', { class: 'fh-top' }, timeEl, hintEl), wordBox, scoreEl, fb, pauseBtn);
       const scr = h('section', { class: 'fh-play' }, stage);
       scr.style.setProperty('--c', ctx.color);
@@ -241,11 +241,11 @@ export default {
         if (ok) { scores[name] += 1; scoreEl.textContent = String(scores[name]); sfx.good(); buzz(60); }
         else { sfx.pass(); buzz([20, 40, 20]); }
         stage.classList.add(ok ? 'yes' : 'no');
-        fb.textContent = ok ? '✓' : '⤴';
+        fb.replaceChildren(ic(ok ? 'check' : 'arrow-forward-up'));
         current = null;
         setTimeout(() => {
           stage.classList.remove('yes', 'no');
-          fb.textContent = '';
+          fb.replaceChildren();
           busy = false;
           if (t && !t.done) nextWord();
         }, 650);
@@ -266,7 +266,7 @@ export default {
         closeOverlay();
         sfx.buzzer(); buzz([100, 60, 200]);
         stage.classList.add('over');
-        wordEl.textContent = '⏰';
+        wordEl.textContent = 'Time!';
         fitWord();
         setTimeout(() => recap(name, record), 1300);
       }
@@ -278,11 +278,11 @@ export default {
       mount(view({
         color: ctx.color, back: ctx.quit, title: name,
         body: h('div', { class: 'recap' },
-          h('div', { class: 'recap-score' }, String(scores[name]), h('small', null, ' ✓')),
+          h('div', { class: 'recap-score' }, String(scores[name]), ic('check')),
           h('div', { class: 'recap-list' }, record.length
-            ? record.map((r) => h('span', { class: `chip ${r.ok ? 'ok' : 'skip'}` }, r.ok ? '✓ ' : '⤴ ', r.w))
-            : h('span', { class: 'chip skip' }, '—'))),
-        actions: [btn(last ? 'Results' : 'Next', nextTurn, { emoji: last ? '🏁' : '➡️' })],
+            ? record.map((r) => h('span', { class: `chip ${r.ok ? 'ok' : 'skip'}` }, ic(r.ok ? 'check' : 'arrow-forward-up'), r.w))
+            : null)),
+        actions: [btn(last ? 'Results' : 'Next', nextTurn, { icon: last ? 'flag' : 'arrow-right' })],
       }));
     }
   },

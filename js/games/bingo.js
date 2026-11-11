@@ -1,21 +1,21 @@
 // I Spy Bingo: spot things around you and mark them. Get a line for BINGO.
-import { h, view, btn, mount, confetti, overlay, closeOverlay, confirmBox } from '../core/ui.js';
+import { h, view, btn, mount, confetti, overlay, closeOverlay, confirmBox, ic } from '../core/ui.js';
 import { spotItems } from '../core/db.js';
 import { store } from '../core/store.js';
 import { sfx, buzz } from '../core/sound.js';
-import { art } from '../core/tutorial.js';
+import { art, glyph } from '../core/tutorial.js';
 
-const cell = (i, x, y, e) => art.at(x, y, `<g class="a c${i}"><rect x="-22" y="-22" width="44" height="44" rx="9" fill="#fff" stroke="#1d1530" stroke-width="2.5"/><text x="0" y="1" font-size="22" text-anchor="middle" dominant-baseline="central">${e}</text>
-  <circle class="m${i}" r="19" fill="#a3cb38" opacity="0"/><text class="m${i}" x="0" y="2" font-size="22" text-anchor="middle" dominant-baseline="central" fill="#fff" font-weight="900" opacity="0">✓</text></g>`);
-const E = ['🎈', '🕶️', '🍦', '🧢', '🦄', '🎒', '👶', '🌈', '🍿'];
+const cell = (i, x, y, e) => art.at(x, y, `<g class="a c${i}"><rect x="-22" y="-22" width="44" height="44" rx="9" fill="#fff" stroke="#1d1530" stroke-width="2.5"/>${glyph(e, 24, '#1d1530')}
+  <circle class="m${i}" r="19" fill="#a3cb38" opacity="0"/><g class="m${i}" opacity="0">${glyph('check', 24, '#fff')}</g></g>`);
+const E = ['balloon', 'sunglasses', 'ice-cream', 'umbrella', 'butterfly', 'backpack', 'baby-carriage', 'camera', 'cake'];
 
 const tut = {
   id: 'bingo',
   svg: `
     ${E.map((e, i) => cell(i, 160 + ((i % 3) - 1) * 50, 112 + (Math.floor(i / 3) - 1) * 50, e)).join('')}
-    ${art.emoji('spy', 52, 70, '👀', 40)}
-    ${art.emoji('balloon', 272, 60, '🎈', 40)}
-    ${art.emoji('tap', 130, 80, '👆', 30)}
+    ${art.icon('spy', 52, 70, 'binoculars', { size: 36, color: '#1d1530' })}
+    ${art.icon('balloon', 272, 60, 'balloon', { size: 40, color: '#ff3b6b' })}
+    ${art.icon('tap', 130, 80, 'hand-finger', { size: 30, color: '#1d1530' })}
     ${art.text('bingo', 160, 112, 'BINGO!', { fs: 44, fill: '#ff3b6b' })}
   `,
   css: `
@@ -31,10 +31,10 @@ const tut = {
     .tut-bingo[data-s="3"] .bingo { animation: tPop .5s 1s both cubic-bezier(.3,1.6,.5,1); }
   `,
   steps: [
-    { c: '🃏 You get a card', t: 1800 },
-    { c: '👀 Spot it around you', t: 2200 },
-    { c: '👆 Tap to mark it', t: 2200 },
-    { c: '🎉 Get a line = BINGO!', t: 2800 },
+    { c: 'You get a card', t: 1800 },
+    { c: 'Spot it around you', t: 2200 },
+    { c: 'Tap to mark it', t: 2200 },
+    { c: 'Get a line = BINGO!', t: 2800 },
   ],
 };
 
@@ -48,19 +48,19 @@ function lines(n) {
 }
 
 export default {
-  id: 'bingo', name: 'I Spy Bingo', emoji: '👀', color: '#a3cb38', min: 0, tut,
+  id: 'bingo', name: 'I Spy Bingo', icon: 'eye', color: '#a3cb38', min: 0, tut,
   start(ctx) {
     const size = ctx.level === 1 ? 3 : ctx.level === 2 ? 4 : 5;
     let card = store.get('bingo', null);
-    if (!card || card.size !== size) card = newCard();
+    if (!card || card.size !== size || card.v !== 2) card = newCard();
     render();
 
     function newCard() {
       const n = size * size;
       const free = size === 5 ? 12 : -1;
       const items = spotItems(n);
-      if (free >= 0) items[free] = ['⭐', 'Free'];
-      const c = { size, items, marks: items.map((_, i) => i === free), done: 0 };
+      if (free >= 0) items[free] = ['star-filled', 'Free'];
+      const c = { v: 2, size, items, marks: items.map((_, i) => i === free), done: 0 };
       store.set('bingo', c);
       return c;
     }
@@ -71,11 +71,11 @@ export default {
         h('button', {
           class: `bcell ${card.marks[i] ? 'on' : ''}`,
           onclick: () => toggle(i),
-        }, h('span', { class: 'bcell-e' }, e), h('span', { class: 'bcell-t' }, label))));
+        }, h('span', { class: 'bcell-i' }, ic(e)), h('span', { class: 'bcell-t' }, label), card.marks[i] ? h('span', { class: 'bcell-check' }, ic('check')) : null)));
       mount(view({
         color: ctx.color, back: ctx.exit, title: ctx.name,
         body: h('div', { class: 'bingo-wrap' }, grid),
-        actions: [btn('New card', () => confirmBox({ color: ctx.color, emoji: '🔄', text: 'New card?', onYes: () => { card = newCard(); render(); } }), { kind: 'ghost', emoji: '🔄' })],
+        actions: [btn('New card', () => confirmBox({ color: ctx.color, icon: 'refresh', text: 'New card?', onYes: () => { card = newCard(); render(); } }), { kind: 'ghost', icon: 'refresh' })],
       }));
     }
 
@@ -92,8 +92,8 @@ export default {
         sfx.win(); confetti(all ? 140 : 70); buzz([60, 40, 120]);
         overlay(h('div', { class: 'stack center' },
           h('div', { class: 'bingo-shout' }, all ? 'BLACKOUT!' : 'BINGO!'),
-          h('div', { class: 'huge-emoji' }, all ? '🏆' : '🎉'),
-          h('div', { class: 'actions n1 inline' }, btn('Keep going', () => closeOverlay(), { emoji: '👀' }))), { color: ctx.color });
+          h('div', { class: 'huge-ico' }, ic(all ? 'trophy' : 'confetti')),
+          h('div', { class: 'actions n1 inline' }, btn('Keep going', () => closeOverlay(), { icon: 'eye' }))), { color: ctx.color });
       }
     }
   },

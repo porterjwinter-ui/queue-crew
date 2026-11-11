@@ -1,7 +1,7 @@
 // Plays an animated "how to play" storyboard.
 // A tutorial is { id, svg, css, steps: [{ c: 'caption', t: ms }] }.
 // The SVG gets data-s="<step>" and each tutorial's CSS moves its pieces for that step.
-import { h } from './ui.js';
+import { h, iconMarkup } from './ui.js';
 
 const injected = new Set();
 
@@ -54,6 +54,15 @@ export function tutorial(t, { captions = true } = {}) {
 
 // Reusable SVG bits for storyboards. Each piece sits inside a positioned wrapper so CSS
 // transforms on the inner ".a" group animate relative to where the piece was placed.
+// Icon drawn centered on 0,0 at the given size.
+export function glyph(name, size, color = '#1d1530') {
+  const k = size / 24;
+  const paint = name.endsWith('-filled')
+    ? `fill="${color}" stroke="none"`
+    : `fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"`;
+  return `<g transform="translate(${-size / 2} ${-size / 2}) scale(${k})" color="${color}" ${paint}>${iconMarkup(name)}</g>`;
+}
+
 const at = (x, y, inner, scale = 1) => `<g transform="translate(${x} ${y})${scale !== 1 ? ` scale(${scale})` : ''}">${inner}</g>`;
 
 export const art = {
@@ -74,11 +83,11 @@ export const art = {
       <rect class="${id}-scr" x="${-w / 2 + 3}" y="${-hgt / 2 + 3}" width="${w - 6}" height="${hgt - 6}" rx="4" fill="${fill}"/>
       ${text ? `<text x="0" y="${fs / 2.6}" text-anchor="middle" font-size="${fs}" font-weight="900" fill="#1d1530">${text}</text>` : ''}</g>`);
   },
-  bubble(id, x, y, text, { w = 70, fs = 15, fill = '#fff', tail = 'down' } = {}) {
+  bubble(id, x, y, text, { w = 70, fs = 15, fill = '#fff', tail = 'down', icon, iconColor = '#1d1530' } = {}) {
     const tailPath = tail === 'down' ? 'M-6 14 L0 24 L6 14 Z' : tail === 'left' ? `M${-w / 2 + 2} -6 L${-w / 2 - 10} 2 L${-w / 2 + 2} 6 Z` : `M${w / 2 - 2} -6 L${w / 2 + 10} 2 L${w / 2 - 2} 6 Z`;
+    const content = icon ? glyph(icon, 20, iconColor) : `<text x="0" y="${fs / 2.8}" text-anchor="middle" font-size="${fs}" font-weight="900" fill="#1d1530">${text}</text>`;
     return at(x, y, `<g class="a ${id}"><path d="${tailPath}" fill="${fill}" stroke="#1d1530" stroke-width="2.5" stroke-linejoin="round"/>
-      <rect x="${-w / 2}" y="-16" width="${w}" height="32" rx="14" fill="${fill}" stroke="#1d1530" stroke-width="2.5"/>
-      <text x="0" y="${fs / 2.8}" text-anchor="middle" font-size="${fs}" font-weight="900" fill="#1d1530">${text}</text></g>`);
+      <rect x="${-w / 2}" y="-16" width="${w}" height="32" rx="14" fill="${fill}" stroke="#1d1530" stroke-width="2.5"/>${content}</g>`);
   },
   check(id, x, y, r = 16) {
     return at(x, y, `<g class="a ${id}"><circle r="${r}" fill="#20bf6b"/><path d="M${-r * 0.45} 0 l${r * 0.3} ${r * 0.32} l${r * 0.6} ${-r * 0.62}" fill="none" stroke="#fff" stroke-width="${r * 0.28}" stroke-linecap="round" stroke-linejoin="round"/></g>`);
@@ -86,8 +95,10 @@ export const art = {
   cross(id, x, y, r = 16) {
     return at(x, y, `<g class="a ${id}"><circle r="${r}" fill="#ff3b3b"/><path d="M${-r * 0.38} ${-r * 0.38} L${r * 0.38} ${r * 0.38} M${r * 0.38} ${-r * 0.38} L${-r * 0.38} ${r * 0.38}" stroke="#fff" stroke-width="${r * 0.28}" stroke-linecap="round"/></g>`);
   },
-  emoji(id, x, y, e, size = 30) {
-    return at(x, y, `<g class="a ${id}"><text x="0" y="0" font-size="${size}" text-anchor="middle" dominant-baseline="central">${e}</text></g>`);
+  // An icon from the set, optionally on a colored disc.
+  icon(id, x, y, name, { size = 30, color = '#1d1530', bg = null } = {}) {
+    const disc = bg ? `<circle r="${(size * 0.82).toFixed(1)}" fill="${bg}"/>` : '';
+    return at(x, y, `<g class="a ${id}">${disc}${glyph(name, size, color)}</g>`);
   },
   text(id, x, y, t, { fs = 16, fill = '#1d1530', weight = 900 } = {}) {
     return at(x, y, `<g class="a ${id}"><text x="0" y="${fs / 3}" text-anchor="middle" font-size="${fs}" font-weight="${weight}" fill="${fill}">${t}</text></g>`);

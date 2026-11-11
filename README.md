@@ -2,7 +2,7 @@
 
 ## Play: **[porterjwinter-ui.github.io/queue-crew](https://porterjwinter-ui.github.io/queue-crew/)**
 
-Open that link on your phone. To keep it like an app, tap **Share**, then **Add to Home Screen** (iPhone), or open the browser menu and tap **Add to Home screen** (Android). After the first visit it works with no signal. Nothing needs to be installed or run on the phone.
+Open that link on your phone and tap the **install** button (next to the tickets button) to add it to your home screen. On Android this opens the install prompt; on iPhone it shows the two taps to make: **Share**, then **Add to Home Screen**. After the first visit it works with no signal. Nothing needs to be installed or run on the phone.
 
 Party games for waiting in line, made for phones.
 

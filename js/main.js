@@ -1,5 +1,5 @@
 // Queue Crew — app shell: home carousel, how-to-play intros, players, scoreboard.
-import { h, view, btn, mount, initUI, avatar, confirmBox, themeVars, enable, onCleanup, ic, stars, toast } from './core/ui.js';
+import { h, view, btn, mount, initUI, avatar, confirmBox, themeVars, enable, onCleanup, ic, stars, toast, overlay, closeOverlay } from './core/ui.js';
 import { loadDB } from './core/db.js';
 import { unlockAudio, sfx, soundOn, setSound } from './core/sound.js';
 import { store, getPlayers, setPlayers, getLevel, setLevel, getTickets, resetTickets, devOn } from './core/store.js';
@@ -24,6 +24,33 @@ const GAMES = [forehead, imposter, hotpotato, dontsayit, majority, jinx, spectru
 const NO_LEVEL = new Set(['majority', 'spectrum', 'wait']);
 const LEVELS = ['', 'Easy', 'Medium', 'Hard'];
 const APP_COLOR = '#6c5ce7';
+
+// ---------- Install ----------
+// Android/Chrome/Edge hand us an install prompt we can trigger from our own button.
+// iPhone has no such prompt, so the button shows how to use Share > Add to Home Screen.
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; });
+window.addEventListener('appinstalled', () => { installEvt = null; document.querySelector('.install-btn')?.remove(); });
+const isInstalled = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+async function install() {
+  if (installEvt) {
+    const e = installEvt;
+    installEvt = null;
+    e.prompt();
+    try { await e.userChoice; } catch { /* dismissed */ }
+    return;
+  }
+  const steps = isIOS()
+    ? [['square-arrow-up', 'Tap Share'], ['square-plus', 'Tap Add to Home Screen']]
+    : [['dots-vertical', 'Open the browser menu'], ['download', 'Tap Install app']];
+  overlay(h('div', { class: 'stack center' },
+    h('div', { class: 'huge-ico' }, ic('device-mobile')),
+    h('div', { class: 'overlay-text' }, 'Add Queue Crew to your phone'),
+    h('div', { class: 'install-steps' }, steps.map(([icon, text], i) => h('div', { class: 'install-step' }, h('span', { class: 'num' }, String(i + 1)), ic(icon), h('span', null, text)))),
+    h('div', { class: 'actions n1 inline' }, btn('Got it', () => closeOverlay(), { icon: 'check' }))), { color: APP_COLOR });
+}
 
 // ---------- Home ----------
 function home() {
@@ -60,7 +87,10 @@ function home() {
     else if (taps >= 4) toast(`${7 - taps} more`);
   } }, h('span', { class: 'logo-q' }, 'Q'), 'ueue Crew', devOn() ? h('span', { class: 'dev-badge' }, 'DEV') : null);
   const v = view({
-    color: APP_COLOR, left: sound, right: trophy,
+    color: APP_COLOR, left: sound,
+    right: h('div', { class: 'bar-right' },
+      isInstalled() ? null : h('button', { class: 'iconbtn install-btn', 'aria-label': 'Install app', onclick: () => { sfx.tap(); install(); } }, ic('download')),
+      trophy),
     title: logo,
     body: h('div', { class: 'home' }, waitChip, car),
     actions: [playBtn],

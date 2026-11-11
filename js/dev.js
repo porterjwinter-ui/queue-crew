@@ -2,7 +2,7 @@
 // Developer mode lets an AI (through the owner's OpenRouter key) keep every game stocked:
 // Forehead gets endless new decks, and games quietly get more words, questions, scales
 // and cards whenever they're about to repeat. With developer mode off, none of that is used.
-import { h, view, btn, mount, ic, confirmBox, enable } from './core/ui.js';
+import { h, view, btn, mount, ic, confirmBox, enable, dropdown } from './core/ui.js';
 import { store } from './core/store.js';
 import { KINDS, getKey, setKey, getModelInfo, setModelInfo, cachedModels, loadModels, generate, getLog } from './core/ai.js';
 import { extraCounts, clearExtras } from './core/db.js';
@@ -35,8 +35,7 @@ export function devMenu(home) {
 
   const model = modelPicker();
 
-  const kind = h('select', { class: 'big-select', 'aria-label': 'What to make' },
-    KINDS.map((k) => h('option', { value: k.id }, k.label)));
+  const kind = choicePicker(KINDS);
 
   const status = h('div', { class: 'dev-status' });
   const made = h('div', { class: 'dev-made' });
@@ -57,7 +56,7 @@ export function devMenu(home) {
     enable(gen, false);
     made.replaceChildren();
     try {
-      const r = await generate(kind.value, (msg) => { status.textContent = msg; });
+      const r = await generate(kind.value(), (msg) => { status.textContent = msg; });
       const items = [
         ...r.words.map((w) => w[1]),
         ...Object.keys(r.taboo),
@@ -91,54 +90,69 @@ export function devMenu(home) {
         h('p', { class: 'dev-note' }, 'Forehead gets a New deck card, and games write more words and questions before they repeat.')),
       section('OpenRouter key', keyInput, h('p', { class: 'dev-note' }, 'Saved only on this phone. Sent only to openrouter.ai.')),
       section('Model', model.el),
-      section('Make more now', kind, status, made),
+      section('Make more now', kind.el, status, made),
       section('Made by AI', counts, logEl)),
     actions: [remove, gen],
   }));
   showCounts();
 }
 
-// Search box over every OpenRouter model. Type part of a name or id ("flash", "claude", "llama").
+// A simple custom dropdown of fixed choices.
+function choicePicker(options) {
+  let value = options[0].id;
+  const list = h('div', { class: 'dd-list', role: 'listbox' });
+  const dd = dropdown({ label: options[0].label, panel: list });
+  const render = () => list.replaceChildren(...options.map((o) => h('button', {
+    class: `dd-opt ${o.id === value ? 'on' : ''}`, type: 'button', role: 'option', 'aria-selected': String(o.id === value),
+    onclick: () => { value = o.id; dd.setLabel(o.label); render(); dd.close(); },
+  }, o.label)));
+  render();
+  return { el: dd.el, value: () => value };
+}
+
+// Model dropdown with a search box over every OpenRouter model. Each row shows just the name and price.
 function modelPicker() {
   let models = cachedModels();
-  const current = h('div', { class: 'model-current' });
+  const price = (m) => (m.in || m.out ? `$${fmt(m.in)} in / $${fmt(m.out)} out per 1M tokens` : 'Free');
+  const labelFor = (m) => [h('b', null, m.name), h('span', null, m.price === null ? 'Typed by hand' : price(m))];
+
   const search = h('input', {
-    class: 'big-input', type: 'search', placeholder: 'Search models', autocomplete: 'off',
+    class: 'dd-search-input', type: 'text', inputmode: 'search', placeholder: 'Search models', autocomplete: 'off',
     autocapitalize: 'none', spellcheck: 'false', 'aria-label': 'Search models', enterkeyhint: 'search',
   });
-  const list = h('div', { class: 'model-list', role: 'listbox', 'aria-label': 'Models' });
-  const note = h('p', { class: 'dev-note' });
+  const clear = h('button', { class: 'dd-clear', type: 'button', 'aria-label': 'Clear search', onclick: () => { search.value = ''; render(); search.focus(); } }, ic('x'));
+  const list = h('div', { class: 'dd-list', role: 'listbox', 'aria-label': 'Models' });
+  const note = h('div', { class: 'dd-note' });
+  const dd = dropdown({
+    label: labelFor(getModelInfo()),
+    panel: [h('div', { class: 'dd-search' }, ic('search'), search, clear), list, note],
+    onOpen: () => render(),
+  });
 
-  const price = (m) => (m.in || m.out ? `$${fmt(m.in)} in / $${fmt(m.out)} out per 1M tokens` : 'Free');
-  const showCurrent = () => {
-    const m = getModelInfo();
-    current.replaceChildren(h('b', null, m.name), h('span', null, m.id), h('span', null, price(m)));
-  };
+  const choose = (m) => { setModelInfo(m); dd.setLabel(labelFor(getModelInfo())); dd.close(); };
 
-  const render = () => {
+  function render() {
     const q = search.value.trim().toLowerCase();
+    clear.hidden = !q;
     const terms = q.split(/\s+/).filter(Boolean);
     const sel = getModelInfo().id;
-    let hits = terms.length ? models.filter((m) => terms.every((t) => `${m.name} ${m.id}`.toLowerCase().includes(t))) : models;
-    const shown = hits.slice(0, 40);
-    const rows = shown.map((m) => h('button', {
-      class: `model-row ${m.id === sel ? 'on' : ''}`, role: 'option', 'aria-selected': String(m.id === sel),
-      onclick: () => { setModelInfo(m); showCurrent(); render(); },
-    }, h('b', null, m.name), h('span', null, m.id), h('span', null, price(m))));
+    const hits = terms.length ? models.filter((m) => terms.every((t) => `${m.name} ${m.id}`.toLowerCase().includes(t))) : models;
+    const rows = hits.slice(0, 40).map((m) => h('button', {
+      class: `dd-opt ${m.id === sel ? 'on' : ''}`, type: 'button', role: 'option', 'aria-selected': String(m.id === sel),
+      onclick: () => choose(m),
+    }, h('b', null, m.name), h('span', null, price(m))));
     // Not in the list (or offline)? Typing an exact model id still works.
     if (!hits.some((m) => m.id === q) && /^[a-z0-9~][\w.-]*\/[\w.:~-]+$/i.test(q)) {
-      rows.push(h('button', { class: 'model-row', onclick: () => { setModelInfo({ id: q, name: q, params: [] }); showCurrent(); render(); } },
-        h('b', null, `Use "${q}"`), h('span', null, 'Model id typed by hand')));
+      rows.push(h('button', { class: 'dd-opt', type: 'button', onclick: () => choose({ id: q, name: q, params: [], price: null }) },
+        h('b', null, `Use "${q}"`), h('span', null, 'Typed by hand')));
     }
-    list.replaceChildren(...(rows.length ? rows : [h('div', { class: 'model-empty' }, 'No models match.')]));
+    list.replaceChildren(...(rows.length ? rows : [h('div', { class: 'dd-empty' }, 'No models match.')]));
     note.textContent = terms.length ? `${hits.length} match${hits.length === 1 ? '' : 'es'}` : `${models.length} models`;
-  };
+  }
 
   search.addEventListener('input', render);
-  showCurrent();
-  render();
-  loadModels().then((m) => { models = m; render(); }).catch(() => { note.textContent = `${models.length} saved models (no connection)`; });
-  return { el: h('div', { class: 'model-picker' }, current, search, list, note) };
+  loadModels().then((m) => { models = m; if (!list.closest('[hidden]')) render(); }).catch(() => { note.textContent = `${models.length} saved models (no connection)`; });
+  return { el: dd.el };
 }
 
 function fmt(n) { return n >= 10 ? String(Math.round(n)) : String(Number(n.toFixed(2))); }

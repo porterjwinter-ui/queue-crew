@@ -24,7 +24,7 @@ export const getKey = () => store.get('dev.key', '');
 export function setKey(k) { if (k) store.set('dev.key', k); else store.del('dev.key'); }
 export const getModelInfo = () => store.get('dev.model2', null) || DEFAULT_MODEL;
 export const getModel = () => getModelInfo().id;
-export const setModelInfo = (m) => store.set('dev.model2', { id: m.id, name: m.name, in: m.in, out: m.out, params: m.params || [] });
+export const setModelInfo = (m) => store.set('dev.model2', { id: m.id, name: m.name, in: m.in, out: m.out, params: m.params || [], price: m.price === null ? null : undefined });
 
 // OpenRouter's public model list (no key needed). Cached so the picker works offline too.
 export function cachedModels() {

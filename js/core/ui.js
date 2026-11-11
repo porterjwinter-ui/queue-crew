@@ -189,6 +189,37 @@ export function pop(text, { x = 50, y = 40, color = '#fff' } = {}) {
   setTimeout(() => p.remove(), 1000);
 }
 
+// Custom dropdown (the app never uses the browser's built-in <select>).
+// The panel opens in place below the button and closes on a pick, a tap outside, or Escape.
+export function dropdown({ label, panel, onOpen, cls = '' }) {
+  const lab = h('span', { class: 'dd-label' });
+  const button = h('button', { class: 'dd-btn', type: 'button', 'aria-haspopup': 'listbox', 'aria-expanded': 'false' }, lab, ic('chevron-down', 'dd-chev'));
+  const box = h('div', { class: 'dd-panel' }, panel);
+  box.hidden = true;
+  const wrap = h('div', { class: `dd ${cls}` }, button, box);
+  const outside = (e) => { if (!wrap.contains(e.target)) close(); };
+  const esc = (e) => { if (e.key === 'Escape') close(); };
+  function open() {
+    box.hidden = false;
+    wrap.classList.add('open');
+    button.setAttribute('aria-expanded', 'true');
+    document.addEventListener('pointerdown', outside, true);
+    document.addEventListener('keydown', esc);
+    if (onOpen) onOpen();
+  }
+  function close() {
+    box.hidden = true;
+    wrap.classList.remove('open');
+    button.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('pointerdown', outside, true);
+    document.removeEventListener('keydown', esc);
+  }
+  button.addEventListener('click', () => { sfx.tap(); if (box.hidden) open(); else close(); });
+  const setLabel = (content) => lab.replaceChildren(...[].concat(content));
+  setLabel(label);
+  return { el: wrap, close, setLabel };
+}
+
 // Small message at the bottom of the screen.
 export function toast(text, ms = 1400) {
   document.querySelectorAll('.toast').forEach((t) => t.remove());

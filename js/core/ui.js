@@ -1,6 +1,7 @@
 // Tiny DOM + screen helpers shared by every game.
 import { sfx, buzz } from './sound.js';
 import { ICONS } from './icons.js';
+import { getPlayers } from './store.js';
 
 export function h(tag, attrs, ...kids) {
   const el = document.createElement(tag);
@@ -290,10 +291,25 @@ export function avatarColor(name) {
   let x = 0; for (const ch of name) x = (x * 31 + ch.charCodeAt(0)) >>> 0;
   return AV_COLORS[x % AV_COLORS.length];
 }
+// The letters in a player's circle: just the first letter, unless another player's name starts
+// the same way, then the shortest beginning that tells them apart ("Bri" / "Bro"), up to 3 letters.
+export function initials(name) {
+  const n = String(name).trim();
+  const others = getPlayers().map((p) => String(p).trim().toLowerCase()).filter((p) => p !== n.toLowerCase());
+  let len = 1;
+  while (len < 3 && others.some((o) => o.startsWith(n.slice(0, len).toLowerCase()))) len += 1;
+  const t = n.slice(0, len) || '?';
+  return t[0].toUpperCase() + t.slice(1).toLowerCase();
+}
 export function avatar(name, size = 'm', extra) {
   const c = avatarColor(name);
-  return h('span', { class: `av av-${size}`, style: { background: c, color: textOn(c) }, title: name },
-    (name.trim()[0] || '?').toUpperCase(), extra || null);
+  const t = initials(name);
+  return h('span', { class: `av av-${size} l${t.length}`, style: { background: c, color: textOn(c) }, title: name },
+    h('span', { class: 'av-t' }, t), extra || null);
+}
+// Circle with the name underneath, for rows of players (turn order, scores, teams).
+export function person(name, size = 's', extra) {
+  return h('span', { class: `person person-${size}` }, avatar(name, size, extra), h('span', { class: 'person-name' }, name));
 }
 export function nameTag(name, extra) {
   return h('span', { class: 'nametag' }, avatar(name, 's'), h('span', null, name), extra || null);

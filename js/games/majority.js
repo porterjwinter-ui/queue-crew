@@ -1,6 +1,6 @@
 // Majority Rules: everyone answers the same question secretly.
 // Your answer matches the most popular one? +1. First to 5 wins.
-import { h, view, btn, mount, avatar, enable, fitText, ic } from '../core/ui.js';
+import { h, view, btn, mount, avatar, person, enable, fitText, ic } from '../core/ui.js';
 import { questionStream } from '../core/db.js';
 import { groupAnswers, titleCase } from '../core/text.js';
 import { sfx } from '../core/sound.js';
@@ -111,7 +111,7 @@ export default {
           },
         },
         h('div', { class: 'group-text' }, titleCase(g.items[0].text)),
-        h('div', { class: 'group-avs' }, g.items.map((it) => avatar(it.name, 's'))),
+        h('div', { class: 'group-avs' }, g.items.map((it) => person(it.name, 'xs'))),
         g === win ? h('div', { class: 'group-plus' }, '+1') : null)));
       };
       render();

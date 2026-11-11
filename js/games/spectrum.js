@@ -1,6 +1,6 @@
 // Spectrum (everyone on one team): one player sees a hidden target on a scale and gives a clue.
 // The team turns the needle. Closer = more points.
-import { h, view, btn, mount, holdToPeek, enable, ic, avatar } from '../core/ui.js';
+import { h, view, btn, mount, holdToPeek, enable, ic, avatar, person } from '../core/ui.js';
 import { spectrumStream } from '../core/db.js';
 import { randInt } from '../core/rng.js';
 import { sfx, buzz } from '../core/sound.js';
@@ -159,7 +159,7 @@ export default {
             h('div', { class: 'sp-hand-pic' },
               h('span', { class: 'sp-hand-who' }, avatar(psychic, 'm'), h('span', { class: 'sp-hand-bubble' }, ic('message-circle'))),
               h('span', { class: 'sp-hand-phone' }, ic('device-mobile')),
-              h('span', { class: 'sp-hand-team' }, team.map((t) => avatar(t, 'm')))),
+              h('span', { class: 'sp-hand-team' }, team.map((t) => person(t, 's')))),
             h('ol', { class: 'sp-hand-steps' },
               h('li', null, ic('message-circle'), 'Say your clue'),
               h('li', null, ic('device-mobile'), 'Give the phone to the team'))),
@@ -173,7 +173,7 @@ export default {
         mount(view({
           color: ctx.color, back: ctx.quit, title: 'Team',
           body: h('div', { class: 'sp-guess' },
-            h('div', { class: 'sp-team' }, team.map((t) => avatar(t, 's'))),
+            h('div', { class: 'sp-team' }, team.map((t) => person(t, 's'))),
             d.el,
             h('div', { class: 'sp-tip' }, ic('hand-finger'), 'Move the needle together'),
             h('div', { class: 'sp-quiet' }, ic('message-circle-off'), psychic, ' stays quiet')),

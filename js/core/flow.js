@@ -1,5 +1,5 @@
 // Screens that many games share: pass-the-phone, carousels, results, teams.
-import { h, view, btn, mount, avatar, nameTag, confetti, setBack, ic, stars } from './ui.js';
+import { h, view, btn, mount, avatar, nameTag, person, confetti, setBack, ic, stars } from './ui.js';
 import { sfx, buzz } from './sound.js';
 import { awardRanking, awardAll, addTickets } from './store.js';
 import { shuffle } from './rng.js';
@@ -94,7 +94,7 @@ export function coopResults(ctx, score, max, { unit = '' } = {}) {
     h('div', { class: 'res-big' }, `${score}`, h('small', null, ` / ${max}${unit}`)),
     h('div', { class: 'res-title' }, titles[nStars]),
     nStars ? h('div', { class: 'res-tix-all' }, tix(nStars), h('span', null, 'each')) : null,
-    h('div', { class: 'res-avs' }, ctx.players.map((p) => avatar(p, 'm')))));
+    h('div', { class: 'res-avs' }, ctx.players.map((p) => person(p, 'm')))));
 }
 
 // Team results: winners get 3 tickets each, everyone else 1.
@@ -105,7 +105,7 @@ export function teamResults(ctx, teams, tscores) {
     h('div', { class: 'res-trophy' }, ic('trophy')),
     teams.map((t, i) => h('div', { class: `team-res ${tscores[i] === best ? 'win' : ''}`, style: { '--tc': t.color } },
       h('div', { class: 'team-res-score' }, String(tscores[i])),
-      h('div', { class: 'team-res-avs' }, t.members.map((m) => avatar(m, 's'))),
+      h('div', { class: 'team-res-avs' }, t.members.map((m) => person(m, 's'))),
       tix(tscores[i] === best ? 3 : 1)))));
 }
 
@@ -136,7 +136,7 @@ export function makeTeams(players) {
 
 export function teamBadge(t, score) {
   return h('div', { class: 'team-badge', style: { '--tc': t.color } },
-    h('span', { class: 'team-avs' }, t.members.map((m) => avatar(m, 'xs'))),
+    h('span', { class: 'team-avs' }, t.members.map((m) => h('span', { class: 'team-who' }, avatar(m, 'xs'), m))),
     score != null ? h('b', null, String(score)) : null);
 }
 
@@ -146,6 +146,7 @@ export function scoreStrip(scores, extra = {}, crossed = new Set()) {
   return h('div', { class: 'score-strip' }, Object.entries(scores).map(([n, s]) =>
     h('span', { class: `ss-item ${crossed.has(n) ? 'is-out' : ''}` },
       crossOut(avatar(n, 's', extra[n] ? h('i', { class: 'ss-badge' }, ic(extra[n])) : null), crossed.has(n)),
+      h('span', { class: 'person-name' }, n),
       h('b', null, String(s)))));
 }
 

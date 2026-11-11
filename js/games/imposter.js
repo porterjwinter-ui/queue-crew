@@ -1,5 +1,5 @@
 // Imposter: everyone gets the secret word except one player. One-word clues, then point and vote.
-import { h, view, btn, mount, holdToPeek, avatar, enable, ic } from '../core/ui.js';
+import { h, view, btn, mount, holdToPeek, avatar, person, enable, ic } from '../core/ui.js';
 import { imposterRound } from '../core/db.js';
 import { randInt } from '../core/rng.js';
 import { passTo, results, scoreStrip } from '../core/flow.js';
@@ -98,7 +98,7 @@ export default {
           body: h('div', { class: 'talk' },
             h('div', { class: 'talk-icon' }, ic('message-circle')),
             h('div', { class: 'talk-rule' }, 'Each person says one word'),
-            h('div', { class: 'talk-order' }, order.map((n, k) => h('span', { class: 'talk-step' }, avatar(n, 'm'), k < order.length - 1 ? ic('chevron-right', 'talk-arrow') : null)))),
+            h('div', { class: 'talk-order' }, order.map((n, k) => h('span', { class: 'talk-step' }, person(n, 'm', h('i', { class: 'order-num' }, String(k + 1))), k < order.length - 1 ? ic('chevron-right', 'talk-arrow') : null)))),
           actions: [btn('Vote', vote, { icon: 'hand-finger-right' })],
         }));
       }

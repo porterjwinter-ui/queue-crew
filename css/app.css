@@ -191,6 +191,15 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
 .av-m { width: 52px; height: 52px; font-size: 24px; }
 .av-xl { width: 140px; height: 140px; font-size: 64px; box-shadow: 0 8px 0 rgba(0, 0, 0, .15); }
 .ss-badge { position: absolute; right: -8px; top: -10px; font-size: 18px; font-style: normal; }
+/* Two or three letters when names start the same way ("Bri" / "Bro"). */
+.av.l2 .av-t { font-size: .78em; letter-spacing: -.02em; }
+.av.l3 .av-t { font-size: .6em; letter-spacing: -.03em; }
+/* A circle with the name under it. */
+.person { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; max-width: 84px; }
+.person-name { font-size: 13px; font-weight: 800; line-height: 1.15; max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person-m .person-name { font-size: 15px; }
+.order-num { position: absolute; left: -6px; top: -6px; z-index: 2; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 12px; font-weight: 900; font-style: normal; display: grid; place-items: center; box-shadow: 0 0 0 2px #fff; }
+.team-who { display: inline-flex; align-items: center; gap: 4px; font-weight: 800; font-size: 14px; margin-right: 6px; }
 /* Out of the game: a thick red X across the player's face. */
 .av.out::before, .av.out::after { content: ''; position: absolute; left: -12%; right: -12%; top: 50%; height: 16%; margin-top: -8%; border-radius: 99px; background: #ff3b3b; box-shadow: 0 0 0 2px #fff; z-index: 1; }
 .av.out::before { transform: rotate(45deg); }
@@ -240,7 +249,6 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
 .talk-rule { font-size: 34px; font-weight: 900; }
 .talk-order { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px; }
 .talk-step { display: inline-flex; align-items: center; gap: 4px; }
-.talk-step i { font-style: normal; font-weight: 900; opacity: .4; font-size: 22px; }
 .vote-num { font-size: 120px; font-weight: 900; line-height: 1; }
 .vote-hand { font-size: 100px; color: var(--c); }
 .reveal-q { font-size: 34px; font-weight: 900; }

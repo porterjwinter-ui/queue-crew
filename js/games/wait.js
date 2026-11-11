@@ -1,6 +1,6 @@
 // Guess the Wait: everyone guesses how many minutes until you board. Closest without going over wins.
 // The clock keeps running in the background while you play other games.
-import { h, view, btn, mount, avatar, nameTag, onCleanup, confetti, confirmBox, ic } from '../core/ui.js';
+import { h, view, btn, mount, avatar, nameTag, person, onCleanup, confetti, confirmBox, ic } from '../core/ui.js';
 import { store, awardRanking } from '../core/store.js';
 import { sfx, buzz } from '../core/sound.js';
 import { passTo, tix } from '../core/flow.js';
@@ -95,7 +95,7 @@ export default {
       mount(view({
         color: ctx.color, back: ctx.exit, title: ctx.name,
         body: h('div', { class: 'wt-run' }, big,
-          h('div', { class: 'wt-avs' }, Object.keys(w.guesses).map((n) => h('span', { class: 'wt-av' }, avatar(n, 'm'), h('b', null, '?')))),
+          h('div', { class: 'wt-avs' }, Object.keys(w.guesses).map((n) => h('span', { class: 'wt-av' }, person(n, 'm'), h('b', null, '?')))),
           h('div', { class: 'wt-tip' }, ic('home'), 'Play other games. It keeps counting.')),
         actions: [
           btn('Cancel', () => confirmBox({ color: ctx.color, icon: 'trash', text: 'Stop the clock?', onYes: () => { store.del('wait'); ctx.exit(); } }), { kind: 'ghost', icon: 'x' }),

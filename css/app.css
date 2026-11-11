@@ -28,7 +28,8 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
 
 /* ---------- Screen frame ---------- */
 .view {
-  min-height: 100vh; min-height: 100dvh;
+  /* Exactly the screen's height: the button bar stays on screen and only the middle scrolls. */
+  height: 100vh; height: 100dvh;
   display: flex; flex-direction: column;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   background: linear-gradient(180deg, var(--c3) 0%, var(--c4) 46%);
@@ -605,6 +606,44 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
   .tut-cap { font-size: 22px; }
   .av-xl { width: 110px; height: 110px; font-size: 50px; }
   .pass-name { font-size: 34px; }
+}
+
+/* Phone turned sideways (or any short screen): shrink everything so screens fit without scrolling. */
+@media (max-height: 500px) {
+  .bar { padding-top: 6px; padding-bottom: 0; }
+  .iconbtn, .home-view .iconbtn { width: 40px; height: 40px; font-size: 20px; border-radius: 13px; }
+  .iconbtn-spacer { width: 40px; }
+  .bar-title { font-size: 18px; }
+  .main { padding-top: 4px; padding-bottom: 4px; gap: 8px; }
+  .actions { padding: 6px 14px 10px; }
+  .btn { min-height: 52px; font-size: 17px; flex-direction: row; gap: 8px; }
+  .btn-ico { font-size: 22px; }
+  .tut-wrap { max-width: calc(38vh * 320 / 220); gap: 4px; }
+  .tut-dots { display: none; }
+  .car-card { max-width: 300px; }
+  .car-track { padding: 4px 0 10px; }
+  .gcard-art { aspect-ratio: 2 / 1; font-size: 60px; }
+  .gcard-name { font-size: 22px; padding: 6px 4px 4px; }
+  .dcard { padding: 10px 12px; }
+  .deck-ico { font-size: 56px; padding-top: 4px; }
+  .deck-name { font-size: 22px; padding: 4px 0 2px; }
+  .peek { min-height: 150px; width: min(70vw, 420px); }
+  .peek-hand { font-size: 52px; }
+  .tut-cap { font-size: 19px; }
+  .av-xl { width: 76px; height: 76px; font-size: 36px; }
+  .pass-name { font-size: 28px; }
+  .fh-place-anim { width: 110px; height: 100px; }
+  .fh-head { font-size: 76px; left: 16px; top: 26px; }
+  .fh-phone { font-size: 46px; left: 32px; top: 0; }
+  .fh-place-text { font-size: 24px; }
+  .fh-place-sub { font-size: 16px; }
+  .recap-score { font-size: 56px; }
+  .huge-ico { font-size: 56px; }
+  .res-trophy { font-size: 52px; }
+  .pchips { min-height: 0; }
+  .pchips-empty { font-size: 36px; }
+  .big-input { padding: 10px 14px; font-size: 20px; }
+  .addbtn { min-height: 48px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .view, .car-card, .pchip, .group, .clue, .res-row { animation: none !important; }

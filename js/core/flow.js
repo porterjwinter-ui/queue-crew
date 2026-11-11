@@ -1,6 +1,6 @@
 // Screens that many games share: pass-the-phone, carousels, results, teams.
 import { h, view, btn, mount, avatar, nameTag, confetti, setBack, ic, stars } from './ui.js';
-import { sfx } from './sound.js';
+import { sfx, buzz } from './sound.js';
 import { awardRanking, awardAll, addTickets } from './store.js';
 import { shuffle } from './rng.js';
 
@@ -43,12 +43,18 @@ export function carousel(items, render, onPick, { start = 0, onChange } = {}) {
       const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid);
       if (d < bd) { bd = d; best = i; }
     });
-    if (best !== current) { current = best; sfx.tick(); onChange && onChange(best); }
+    if (best !== current) { current = best; sfx.tick(); buzz(5); onChange && onChange(best); }
     cards.forEach((c, i) => c.classList.toggle('on', i === current));
     [...dots.children].forEach((d, i) => d.classList.toggle('on', i === current));
   }
-  let timer = 0;
-  track.addEventListener('scroll', () => { clearTimeout(timer); timer = setTimeout(update, 40); }, { passive: true });
+  // Check which card is centered while scrolling (that's what plays the click for each card
+  // you pass), plus once more after scrolling stops in case animation frames are paused.
+  let last = 0, timer = 0;
+  track.addEventListener('scroll', () => {
+    const now = performance.now();
+    if (now - last > 30) { last = now; update(); }
+    clearTimeout(timer); timer = setTimeout(update, 80);
+  }, { passive: true });
   setTimeout(() => { scrollToCard(start, false); update(); }, 0);
   wrap.go = (d) => scrollToCard(Math.max(0, Math.min(items.length - 1, current + d)), true);
   return wrap;

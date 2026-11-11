@@ -186,7 +186,17 @@ async function boot() {
   // Test hook: jump straight to a game's intro (used by tools/test-harness.js).
   window.__qc = { intro: (id) => intro(GAMES.find((g) => g.id === id)), home };
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    const firstVisit = !navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => navigator.serviceWorker.ready)
+      .then((reg) => {
+        // First visit: hand the offline worker every file we just loaded so the app works with no signal.
+        if (!firstVisit || !reg.active) return;
+        const files = ['./', './manifest.webmanifest', './icons/icon-192.png', './icons/apple-touch-icon.png', './icons/icon.svg']
+          .concat(performance.getEntriesByType('resource').map((r) => r.name));
+        reg.active.postMessage({ cache: files });
+      })
+      .catch(() => {});
   }
 }
 

@@ -73,8 +73,15 @@ export function textOn(hex) {
   return (r * 299 + g * 587 + b * 114) / 1000 > 165 ? '#1d1530' : '#ffffff';
 }
 
+// Mix a color toward white (f = 0 → color, 1 → white).
+export function tint(hex, f) {
+  const n = parseInt(hex.slice(1), 16);
+  const c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v + (255 - v) * f));
+  return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
+}
+
 export function themeVars(color) {
-  return { '--c': color, '--c2': shade(color, -0.18), '--c3': shade(color, 0.38), '--on': textOn(color) };
+  return { '--c': color, '--c2': shade(color, -0.18), '--c3': shade(color, 0.38), '--c4': tint(color, 0.9), '--on': textOn(color) };
 }
 
 const ICONS = {

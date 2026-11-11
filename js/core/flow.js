@@ -9,7 +9,7 @@ export function passTo(ctx, name, onReady, { label, icon = 'hand-stop', note } =
   mount(view({
     color: ctx.color, back: ctx.quit, title: ctx.name,
     body: h('div', { class: 'pass' },
-      h('div', { class: 'pass-anim' }, h('span', { class: 'pass-phone' }, ic('device-mobile')), avatar(name, 'xl')),
+      h('div', { class: 'pass-anim' }, avatar(name, 'xl')),
       h('div', { class: 'pass-name' }, name),
       note ? h('div', { class: 'pass-note' }, note) : null),
     actions: [btn(label || `I'm ${name}`, onReady, { icon })],

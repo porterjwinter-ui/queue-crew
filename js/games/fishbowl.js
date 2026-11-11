@@ -12,8 +12,8 @@ const TURN = 45;
 const PER_PLAYER = 3;
 const ROUNDS = [
   { icon: 'message-circle', rule: 'Describe it' },
-  { icon: 'number-1', rule: 'ONE word only' },
-  { icon: 'volume', rule: 'Sounds only' },
+  { icon: 'number-1', rule: 'Only one word' },
+  { icon: 'volume', rule: 'Only sounds' },
 ];
 
 const slip = (cls, x, y, rot = 0) => art.at(x, y, `<g class="a ${cls}"><rect x="-12" y="-7" width="24" height="14" rx="2" fill="#fff8d6" stroke="#1d1530" stroke-width="2" transform="rotate(${rot})"/></g>`);
@@ -48,16 +48,15 @@ const tut = {
     .tut-fishbowl[data-s="2"] .r2, .tut-fishbowl[data-s="2"] .n2,
     .tut-fishbowl[data-s="3"] .r3, .tut-fishbowl[data-s="3"] .n3 { animation: tPop .4s .15s both cubic-bezier(.3,1.6,.5,1); }
     .tut-fishbowl[data-s="1"] .p0, .tut-fishbowl[data-s="2"] .p1, .tut-fishbowl[data-s="3"] .p0 { animation: tBounce .35s .4s 4 alternate; }
-    .tut-fishbowl[data-s="4"] .loop { animation: tPop .4s .1s both, tSpin 1.6s .5s linear infinite; }
-    @keyframes tSpin { to { transform: rotate(360deg); } }
+    .tut-fishbowl[data-s="4"] .loop { animation: tPop .4s .1s both; }
     .tut-fishbowl[data-s="4"] .bowl { animation: tShake .4s .3s 3; }
   `,
   steps: [
-    { c: 'Everyone adds words', t: 2800 },
+    { c: 'Everyone adds words to the bowl', t: 2800 },
     { c: 'Round 1: describe it', t: 2000 },
-    { c: 'Round 2: ONE word', t: 2000 },
-    { c: 'Round 3: sounds only', t: 2000 },
-    { c: 'Same words every round!', t: 2400 },
+    { c: 'Round 2: only one word', t: 2000 },
+    { c: 'Round 3: only sounds', t: 2000 },
+    { c: 'Same words every round', t: 2400 },
   ],
 };
 

@@ -1,5 +1,5 @@
 // Imposter: everyone gets the secret word except one player. One-word clues, then point and vote.
-import { h, view, btn, mount, holdToPeek, avatar, nameTag, enable, ic } from '../core/ui.js';
+import { h, view, btn, mount, holdToPeek, avatar, enable, ic } from '../core/ui.js';
 import { imposterRound } from '../core/db.js';
 import { randInt } from '../core/rng.js';
 import { passTo, results, scoreStrip } from '../core/flow.js';
@@ -31,13 +31,12 @@ const tut = {
     .tut-imposter[data-s="3"] .p2 { animation: tShake .4s .6s 3; }
     .tut-imposter[data-s="4"] .glow { transform: scale(1.3); }
     .tut-imposter[data-s="4"] .bang { animation: tPop .45s .2s both cubic-bezier(.3,1.6,.5,1); }
-    .tut-imposter[data-s="4"] .p0, .tut-imposter[data-s="4"] .p1, .tut-imposter[data-s="4"] .p3 { animation: tBounce .45s infinite alternate; }
   `,
   steps: [
     { c: 'Everyone sees the word…', t: 2600 },
     { c: '…except the imposter', t: 2400 },
-    { c: 'Say ONE word each', t: 3000 },
-    { c: 'Point at the imposter', t: 2400 },
+    { c: 'Each person says one word', t: 3000 },
+    { c: 'Everyone points at the imposter', t: 2400 },
     { c: 'Caught!', t: 2000 },
   ],
 };
@@ -98,7 +97,7 @@ export default {
           color: ctx.color, back: ctx.quit, title: r.topic,
           body: h('div', { class: 'talk' },
             h('div', { class: 'talk-icon' }, ic('message-circle')),
-            h('div', { class: 'talk-rule' }, 'ONE word each'),
+            h('div', { class: 'talk-rule' }, 'Each person says one word'),
             h('div', { class: 'talk-order' }, order.map((n, k) => h('span', { class: 'talk-step' }, avatar(n, 'm'), k < order.length - 1 ? ic('chevron-right', 'talk-arrow') : null)))),
           actions: [btn('Vote', vote, { icon: 'hand-finger-right' })],
         }));
@@ -124,37 +123,23 @@ export default {
       function reveal() {
         const spyName = P[spy];
         mount(view({
-          color: ctx.color, back: ctx.quit, title: 'Imposter was…',
+          color: ctx.color, back: ctx.quit, title: 'The imposter was',
           body: h('div', { class: 'reveal' },
             avatar(spyName, 'xl'), h('div', { class: 'pass-name' }, spyName),
-            h('div', { class: 'reveal-q' }, 'Caught?')),
+            h('div', { class: 'reveal-q' }, 'Did you catch them?')),
           actions: [
-            btn('Escaped', () => { scores[spyName] += 2; sfx.pass(); after('+2', spyName, 'run'); }, { kind: 'ghost', icon: 'run' }),
-            btn('Caught', () => guess(spyName), { icon: 'target' }),
+            btn('No', () => { scores[spyName] += 2; sfx.pass(); after(`${spyName} +2`); }, { kind: 'ghost', icon: 'x' }),
+            btn('Yes', () => { P.forEach((p) => { if (p !== spyName) scores[p] += 1; }); sfx.good(); after('Everyone else +1'); }, { icon: 'check' }),
           ],
         }));
       }
 
-      function guess(spyName) {
-        mount(view({
-          color: ctx.color, back: ctx.quit, title: spyName,
-          body: h('div', { class: 'reveal' },
-            h('div', { class: 'reveal-ico' }, ic('bulb')),
-            h('div', { class: 'reveal-q' }, 'Guess the word!'),
-            holdToPeek(h('div', { class: 'secret' }, h('div', { class: 'secret-word' }, r.word)))),
-          actions: [
-            btn('Wrong', () => { P.forEach((p) => { if (p !== spyName) scores[p] += 1; }); sfx.good(); after('+1 each', null, 'target'); }, { kind: 'ghost', icon: 'x' }),
-            btn('Right', () => { scores[spyName] += 1; sfx.pass(); after('+1', spyName, 'mood-crazy-happy'); }, { icon: 'check' }),
-          ],
-        }));
-      }
-
-      function after(msg, who, icon) {
+      function after(msg) {
         mount(view({
           color: ctx.color, back: ctx.quit, title: `Round ${round}`,
           body: h('div', { class: 'round-end' },
-            h('div', { class: 'secret small' }, h('div', { class: 'secret-word' }, r.word), sneaky ? h('small', null, ic('masks-theater'), r.decoy) : null),
-            h('div', { class: 'round-msg' }, ic(icon), who ? nameTag(who) : null, h('b', null, msg)),
+            h('div', { class: 'secret small' }, h('div', { class: 'secret-word' }, r.word), sneaky ? h('small', null, 'Imposter had: ', r.decoy) : null),
+            h('div', { class: 'round-msg' }, h('b', null, msg)),
             scoreStrip(scores)),
           actions: [
             btn('Finish', () => results(ctx, scores), { kind: 'ghost', icon: 'flag' }),

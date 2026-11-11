@@ -1,6 +1,6 @@
 // The word database: loads data/words.json, indexes it, and generates fresh content for each game.
 import { getRecent, pushRecent } from './store.js';
-import { pick, shuffle, sample, rand } from './rng.js';
+import { pick, shuffle, sample } from './rng.js';
 
 let DB = null;
 const WORDS = [];
@@ -93,37 +93,19 @@ export function tabooStream(level) {
 }
 
 // ---------- Majority Rules ----------
-const article = (s) => (/^[aeiou]/i.test(s) ? 'an' : 'a');
-function nounGroups(min = 8) { return GROUPS.filter((g) => g.kind === 'noun' && g.words.length >= min); }
-
+// Every question is hand-written so it reads naturally.
 export function questionStream() {
-  const authored = DB.questions.map((q) => ({ w: q }));
-  const templated = [];
-  for (const g of nounGroups()) {
-    for (const t of DB.qTemplates) {
-      if (t.includes('famous') && g.s.includes('famous')) continue;
-      templated.push({ w: t.replace('a {s}', `${article(g.s)} {s}`).replace('{s}', g.s) });
-    }
-  }
-  const a = stream(authored, 'questions');
-  const b = stream(templated, 'questions');
-  return { next: () => (rand() < 0.62 ? a : b).next().w };
+  const s = stream(DB.questions.map((q) => ({ w: q })), 'questions');
+  return { next: () => s.next().w };
 }
 
 // ---------- Spectrum ----------
 export function spectrumStream() {
-  const authored = DB.spectrums.map((p) => ({ w: p.join('|'), p }));
-  const templated = [];
-  for (const g of nounGroups()) {
-    for (const [l, r] of DB.specTemplates) {
-      const p = [l.replace('{s}', g.s), r.replace('{s}', g.s)];
-      templated.push({ w: p.join('|'), p });
-    }
-  }
-  const a = stream(authored, 'spectrum');
-  const b = stream(templated, 'spectrum');
-  return { next: () => (rand() < 0.65 ? a : b).next().p };
+  const s = stream(DB.spectrums.map((p) => ({ w: p.join('|'), p })), 'spectrum');
+  return { next: () => s.next().p };
 }
+
+const article = (s) => (/^[aeiou]/i.test(s) ? 'an' : 'a');
 
 // ---------- Jinx ----------
 export function jinxStream(level) {
@@ -178,9 +160,14 @@ export function letterChunk(level) {
 
 // ---------- Doodle Chain ----------
 // Level 1: "a dragon", 2: "a sleepy dragon", 3: "a sleepy dragon on a skateboard".
+const PEOPLE = new Set(['grandma', 'baby', 'chef', 'astronaut', 'pirate', 'knight', 'wizard', 'mermaid']);
+const NOT_FOR_PEOPLE = new Set(['baby', 'chocolate', 'square', 'spotted', 'striped', 'fluffy']);
 export function doodlePrompt(level = 3) {
   const d = DB.doodle;
-  const adj = pick(d.adj), noun = pick(d.noun), act = pick(d.act);
+  let adj, noun, act, tries = 0;
+  do {
+    adj = pick(d.adj); noun = pick(d.noun); act = pick(d.act);
+  } while (tries++ < 20 && (adj === noun || act.includes(noun) || (PEOPLE.has(noun) && NOT_FOR_PEOPLE.has(adj))));
   if (level === 1) return { text: `${article(noun)} ${noun}`, noun };
   if (level === 2) return { text: `${article(adj)} ${adj} ${noun}`, noun };
   return { text: `${article(adj)} ${adj} ${noun} ${act}`, noun };

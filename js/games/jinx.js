@@ -6,7 +6,7 @@ import { sfx, buzz } from '../core/sound.js';
 import { passTo, coopResults } from '../core/flow.js';
 import { art } from '../core/tutorial.js';
 
-const DECK = 13;
+const DECK = 8;
 
 const clueCard = (cls, x, y, word) => art.at(x, y, `<g class="a ${cls}"><rect x="-25" y="-14" width="50" height="28" rx="8" fill="#fff" stroke="#1d1530" stroke-width="2.5"/>
   <text x="0" y="5" text-anchor="middle" font-size="13" font-weight="900" fill="#1d1530">${word}</text>
@@ -42,10 +42,10 @@ const tut = {
     .tut-jinx[data-s="3"] .gs { animation: tBounce .4s 1.4s 3 alternate; }
   `,
   steps: [
-    { c: 'Guesser looks away', t: 2200 },
-    { c: 'Everyone writes ONE word', t: 2600 },
-    { c: 'Same word? Both cancel!', t: 2600 },
-    { c: 'Guess the word!', t: 2800 },
+    { c: 'The guesser looks away', t: 2200 },
+    { c: 'Everyone else writes a one-word clue', t: 2600 },
+    { c: 'Matching clues cancel out', t: 2600 },
+    { c: 'The guesser sees what\'s left', t: 2800 },
   ],
 };
 
@@ -90,7 +90,7 @@ export default {
         input.addEventListener('input', () => {
           const v = input.value.trim();
           const multi = /\s/.test(v);
-          warn.textContent = multi ? 'ONE word only' : '';
+          warn.textContent = multi ? 'Just one word' : '';
           enable(lock, v.length > 0 && !multi);
         });
         input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
@@ -129,7 +129,7 @@ export default {
         render();
         mount(view({
           color: ctx.color, back: ctx.quit, title: guesser + ' looks away',
-          body: h('div', { class: 'jx-check' }, h('div', { class: 'secret small' }, h('div', { class: 'secret-word' }, word)), grid, h('div', { class: 'groups-hint' }, ic('hand-click'), 'Tap to cancel')),
+          body: h('div', { class: 'jx-check' }, h('div', { class: 'secret small' }, h('div', { class: 'secret-word' }, word)), grid, h('div', { class: 'groups-hint' }, 'Tap a clue to cross it out')),
           actions: [btn('Show', () => passTo(ctx, guesser, () => guess()), { icon: 'eye' })],
         }));
       }
@@ -143,10 +143,7 @@ export default {
               ? h('div', { class: 'clues big' }, kept.map((c) => h('div', { class: 'clue' }, h('span', { class: 'clue-text' }, titleCase(c.text)))))
               : h('div', { class: 'jx-empty' }, ic('boom'), 'All jinxed!'),
             h('div', { class: 'jx-say' }, ic('message-circle'), 'Say your guess')),
-          actions: [
-            btn('Pass', () => { left -= 1; sfx.pass(); done(null); }, { kind: 'ghost', icon: 'arrow-forward-up' }),
-            btn('Reveal', () => judge(), { icon: 'eye' }),
-          ],
+          actions: [btn('Reveal', () => judge(), { icon: 'eye' })],
         }));
       }
 
@@ -155,7 +152,7 @@ export default {
           color: ctx.color, back: ctx.quit, title: guesser,
           body: h('div', { class: 'jx-guess' }, h('div', { class: 'secret' }, h('div', { class: 'secret-word' }, word))),
           actions: [
-            btn('Missed', () => { left -= 2; sfx.buzzer(); done(false); }, { kind: 'ghost', icon: 'x' }),
+            btn('Missed', () => { left -= 1; sfx.buzzer(); done(false); }, { kind: 'ghost', icon: 'x' }),
             btn('Got it', () => { left -= 1; score += 1; sfx.good(); done(true); }, { icon: 'check' }),
           ],
         }));

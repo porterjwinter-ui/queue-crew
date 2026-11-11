@@ -11,12 +11,12 @@ Party games for waiting in line, made for phones.
 | Game | Like | Players |
 |------|------|---------|
 | **Forehead** | Heads Up — phone on your forehead, nod = got it, tilt up = skip | 2+ |
-| **Imposter** | Odd One Out / The Chameleon — Classic (imposter knows) or Sneaky (imposter gets a decoy word) | 3+ |
+| **Imposter** | Odd One Out / The Chameleon — Classic (imposter knows) or Sneaky (imposter gets a different word). Caught: everyone else +1. Escaped: imposter +2 | 3+ |
 | **Hot Potato** | Catch Phrase + Pass the Bomb — Describe words or say words with letters, hidden fuse | 2+ |
 | **Don't Say It** | Taboo — 4+ players play in teams, fewer play together | 2+ |
-| **Majority Rules** | Herd Mentality — match the crowd; the lone odd answer gets the Odd Sock | 3+ |
-| **Jinx** | Just One — everyone on one team, matching clues cancel out automatically | 3+ |
-| **Spectrum** | Wavelength — drag the needle to the hidden target | 2+ |
+| **Majority Rules** | Herd Mentality — match the most popular answer for 1 point; first to 5 wins | 3+ |
+| **Jinx** | Just One — everyone on one team, matching clues cancel out automatically; 8 cards | 3+ |
+| **Spectrum** | Wavelength — one player sees the target and says a clue, then hands the phone to the team, who move the needle | 2+ |
 | **Fishbowl** | Salad Bowl — same words, three rounds: describe, one word, sounds only | 2+ |
 | **Doodle Chain** | Telestrations — draw, guess, draw the guess… | 2+ |
 | **I Spy Bingo** | Spot things around you; card size follows the difficulty stars | any |
@@ -30,8 +30,8 @@ Every game opens with an animated how-to-play. Games hand out **tickets** to an 
 
 - 1,290 words in 15 categories and 47 groups, each tagged easy / medium / hard
 - 340 Don't Say It cards with 4 banned words each
-- 95 questions plus templates that turn every word group into more questions
-- 90 opposite pairs for Spectrum plus templates
+- 142 hand-written Majority Rules questions
+- 114 hand-written Spectrum scales
 - doodle parts that combine into about 192,000 different prompts
 - 84 I Spy items, each with its own icon
 

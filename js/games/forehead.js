@@ -63,14 +63,13 @@ const tut = {
     .tut-forehead[data-s="4"] .clk { transform: translate(-24px, 32px) scale(1.8); }
     .tut-forehead[data-s="4"] .clk-arc { animation: fhClock 2s .3s linear both; }
     @keyframes fhClock { to { stroke-dashoffset: 75.4; } }
-    .tut-forehead[data-s="4"] .f1, .tut-forehead[data-s="4"] .f2 { animation: tBounce .5s infinite alternate; }
   `,
   steps: [
     { c: 'Phone on your head', t: 2600 },
     { c: 'Friends give clues', t: 2600 },
-    { c: 'Nod = got it!', t: 2600 },
-    { c: 'Tilt up = skip', t: 2600 },
-    { c: '60 seconds. Go!', t: 2400 },
+    { c: 'Nod down when you get it', t: 2600 },
+    { c: 'Tilt up to skip', t: 2600 },
+    { c: 'You have 60 seconds', t: 2400 },
   ],
 };
 

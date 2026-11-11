@@ -42,8 +42,8 @@ function home() {
   }
   const car = carousel(GAMES, (g) => {
     const card = h('div', { class: 'gcard' },
-      h('div', { class: 'gcard-tut' }, tutorial(g.tut, { captions: false })),
-      h('div', { class: 'gcard-name' }, h('span', { class: 'gcard-ico' }, ic(g.icon)), g.name));
+      h('div', { class: 'gcard-art' }, ic(g.icon)),
+      h('div', { class: 'gcard-name' }, g.name));
     Object.entries(themeVars(g.color)).forEach(([k, v]) => card.style.setProperty(k, v));
     return card;
   }, (g) => intro(g), { start, onChange: (i) => { current = i; playBtn.style.setProperty('--c', GAMES[i].color); playBtn.style.setProperty('--c2', themeVars(GAMES[i].color)['--c2']); playBtn.style.setProperty('--on', themeVars(GAMES[i].color)['--on']); } });

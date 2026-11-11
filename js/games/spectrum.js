@@ -7,7 +7,7 @@ import { sfx, buzz } from '../core/sound.js';
 import { passTo, coopResults } from '../core/flow.js';
 import { art, glyph } from '../core/tutorial.js';
 
-const CARDS = 7;
+const CARDS = 6;
 const BANDS = [[14, 2], [9, 3], [4, 4]]; // [within N points of the target, score]
 const BAND_COLORS = { 2: '#ffd32a', 3: '#ff9f1c', 4: '#ff3b6b' };
 
@@ -58,7 +58,6 @@ const tut = {
     .tut-spectrum[data-s="3"] .ph, .tut-spectrum[data-s="4"] .ph { transform: translate(250px, 0px); }
     .tut-spectrum[data-s="3"] .needle { animation: spTurn 2.2s .2s ease-in-out both; }
     @keyframes spTurn { 0% { transform: rotate(0deg); } 40% { transform: rotate(50deg); } 70% { transform: rotate(22deg); } 100% { transform: rotate(32deg); } }
-    .tut-spectrum[data-s="3"] .t0, .tut-spectrum[data-s="3"] .t1 { animation: tBounce .4s infinite alternate; }
     .tut-spectrum[data-s="3"] .hush { animation: tPop .35s .2s both cubic-bezier(.3,1.6,.5,1); }
     .tut-spectrum[data-s="4"] .needle { transform: rotate(32deg); }
     .tut-spectrum[data-s="4"] .lid { opacity: 0; }

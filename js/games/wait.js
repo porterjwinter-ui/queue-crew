@@ -35,9 +35,9 @@ const tut = {
     .tut-wait[data-s="2"] .p1 { animation: tBounce .4s 1.2s 3 alternate; }
   `,
   steps: [
-    { c: 'Everyone guesses the wait', t: 2400 },
-    { c: 'The clock runs…', t: 2000 },
-    { c: 'Closest without going over', t: 3200 },
+    { c: 'Everyone guesses the wait in minutes', t: 2400 },
+    { c: 'The clock starts', t: 2000 },
+    { c: 'Closest guess without going over wins', t: 3200 },
   ],
 };
 
@@ -83,7 +83,7 @@ export default {
       });
       mount(view({
         color: ctx.color, back: ctx.quit, title: name,
-        body: h('div', { class: 'wt-pick' }, h('div', { class: 'wt-q' }, ic('stopwatch'), 'How long?'), num, slider),
+        body: h('div', { class: 'wt-pick' }, h('div', { class: 'wt-q' }, 'Minutes until we ride?'), num, slider),
         actions: [btn('Lock in', () => { guesses[name] = v; i += 1; sfx.pop(); ask(); }, { icon: 'lock' })],
       }));
     }

@@ -245,7 +245,7 @@ export function nameTag(name, extra) {
 // Press-and-hold to reveal a secret. Calls onSeen() the first time.
 export function holdToPeek(secret, onSeen) {
   let seen = false;
-  const front = h('div', { class: 'peek-front' }, h('div', { class: 'peek-hand' }, ic('hand-finger')), h('div', { class: 'peek-ring' }));
+  const front = h('div', { class: 'peek-front' }, h('div', { class: 'peek-hand' }, ic('hand-finger')), h('div', { class: 'peek-label' }, 'Hold to see'));
   const back = h('div', { class: 'peek-back' }, secret);
   const box = h('div', { class: 'peek' }, front, back);
   const show = (e) => { e.preventDefault(); box.classList.add('open'); if (!seen) { seen = true; onSeen && onSeen(); } };

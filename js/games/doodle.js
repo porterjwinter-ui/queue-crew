@@ -34,7 +34,7 @@ const tut = {
     .tut-doodle[data-s="3"] .d2, .tut-doodle[data-s="4"] .d2 { transform: scale(1); }
     .tut-doodle[data-s="3"] .ink2 { animation: dcInk 1.8s .3s ease-in-out both; }
     .tut-doodle[data-s="4"] .ink2 { stroke-dashoffset: 0; }
-    .tut-doodle[data-s="4"] .lol { animation: tPop .4s .2s both cubic-bezier(.3,1.6,.5,1), tBounce .4s .7s infinite alternate; }
+    .tut-doodle[data-s="4"] .lol { animation: tPop .4s .2s both cubic-bezier(.3,1.6,.5,1); }
   `,
   steps: [
     { c: 'Secret prompt', t: 1800 },

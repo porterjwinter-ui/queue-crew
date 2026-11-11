@@ -126,7 +126,7 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
 .car-dots i.on { opacity: .8; width: 22px; border-radius: 6px; }
 
 .gcard { background: var(--c); color: var(--on); border-radius: 32px; padding: 12px 12px 6px; box-shadow: 0 8px 0 var(--c2); }
-.gcard .tut { border-radius: 24px; box-shadow: none; }
+.gcard-art { aspect-ratio: 4 / 3; border-radius: 24px; background: rgba(255, 255, 255, .2); display: grid; place-items: center; font-size: 120px; line-height: 0; }
 .gcard-name { font-size: 27px; font-weight: 900; padding: 10px 4px 8px; display: flex; align-items: center; justify-content: center; gap: 10px; }
 .gcard-ico { font-size: 30px; line-height: 0; }
 .deck-ico { font-size: 96px; line-height: 1.1; padding-top: 18px; }
@@ -198,8 +198,6 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
 }
 .pass-anim { position: relative; }
 .pass-anim .av { animation: tPop .45s cubic-bezier(.3, 1.6, .5, 1); }
-.pass-phone { position: absolute; left: -64px; top: 40px; font-size: 46px; animation: passSlide 1.8s ease-in-out infinite; }
-@keyframes passSlide { 0% { transform: translateX(-20px) rotate(-12deg); opacity: 0; } 30% { opacity: 1; } 70% { transform: translateX(46px) rotate(8deg); opacity: 1; } 100% { transform: translateX(56px) rotate(8deg); opacity: 0; } }
 .pass-name { font-size: 42px; font-weight: 900; line-height: 1.05; word-break: break-word; }
 .pass-note { margin-top: 4px; }
 
@@ -211,10 +209,10 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
   touch-action: none; -webkit-user-select: none; user-select: none;
 }
 .peek-front { display: grid; place-items: center; position: relative; }
+.peek-label { font-weight: 900; font-size: 22px; margin-top: 10px; }
+.peek-front { display: flex; flex-direction: column; align-items: center; }
 .peek-hand { font-size: 80px; animation: holdPulse 1.4s ease-in-out infinite; }
-.peek-ring { position: absolute; width: 130px; height: 130px; border-radius: 50%; border: 6px solid rgba(255, 255, 255, .6); animation: ringPulse 1.4s ease-out infinite; }
 @keyframes holdPulse { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(10px) scale(.92); } }
-@keyframes ringPulse { from { transform: scale(.4); opacity: 1; } to { transform: scale(1.2); opacity: 0; } }
 .peek-back { position: absolute; inset: 0; display: none; place-items: center; background: var(--card); color: var(--ink); border-radius: 32px; padding: 18px; }
 .peek.open .peek-back { display: grid; }
 .peek.open .peek-front { visibility: hidden; }
@@ -231,13 +229,13 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
 .topic-ico { font-size: 100px; animation: tPop .5s cubic-bezier(.3, 1.6, .5, 1); }
 .topic-label { font-weight: 800; opacity: .55; font-size: 20px; text-transform: uppercase; letter-spacing: 1px; }
 .topic-name { font-size: 42px; font-weight: 900; line-height: 1.05; }
-.talk-icon { font-size: 90px; animation: tBounce .5s infinite alternate; }
+.talk-icon { font-size: 90px; color: var(--c); }
 .talk-rule { font-size: 34px; font-weight: 900; }
 .talk-order { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px; }
 .talk-step { display: inline-flex; align-items: center; gap: 4px; }
 .talk-step i { font-style: normal; font-weight: 900; opacity: .4; font-size: 22px; }
 .vote-num { font-size: 120px; font-weight: 900; line-height: 1; }
-.vote-hand { font-size: 100px; animation: tBounce .35s infinite alternate; }
+.vote-hand { font-size: 100px; color: var(--c); }
 .reveal-q { font-size: 34px; font-weight: 900; }
 .reveal-ico { font-size: 90px; }
 .round-msg { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 26px; flex-wrap: wrap; }
@@ -338,7 +336,7 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
 @keyframes hpWob { from { transform: rotate(calc(var(--heat, 0) * -10deg)); } to { transform: rotate(calc(var(--heat, 0) * 10deg)) translateY(calc(var(--heat, 0) * -6px)); } }
 @keyframes hpFly { 0% { transform: translateX(0) scale(1); } 40% { transform: translateX(60vw) rotate(40deg) scale(.6); } 41% { transform: translateX(-60vw) rotate(-40deg) scale(.6); } 100% { transform: none; } }
 .hp-word { font-size: 42px; font-weight: 900; text-align: center; line-height: 1.05; background: var(--card); border-radius: 24px; padding: 14px 22px; box-shadow: 0 6px 0 var(--shadow); }
-.hp-big-ico { font-size: 110px; animation: tBounce .5s infinite alternate; }
+.hp-big-ico { font-size: 110px; color: var(--c); }
 .hp-first { display: flex; align-items: center; gap: 6px; font-weight: 900; font-size: 22px; }
 .chunk { display: flex; align-items: baseline; justify-content: center; gap: 4px; font-weight: 900; font-size: 64px; flex-wrap: wrap; }
 .chunk b { background: var(--c); color: var(--on); padding: 2px 20px; border-radius: 20px; box-shadow: 0 6px 0 var(--c2); letter-spacing: 2px; }
@@ -396,8 +394,7 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
 .sp-hand-pic { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
 .sp-hand-who { position: relative; }
 .sp-hand-bubble { position: absolute; top: -20px; right: -18px; font-size: 26px; line-height: 0; color: var(--c); background: var(--card); border-radius: 50%; padding: 5px; box-shadow: 0 3px 0 var(--shadow); }
-.sp-hand-phone { font-size: 40px; line-height: 0; color: var(--c); animation: spSlide 1.6s ease-in-out infinite; }
-@keyframes spSlide { 0% { transform: translateX(-26px); opacity: 0; } 30%, 70% { opacity: 1; } 100% { transform: translateX(26px); opacity: 0; } }
+.sp-hand-phone { font-size: 40px; line-height: 0; color: var(--c); }
 .sp-hand-team { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; max-width: 45%; }
 .sp-hand-steps { list-style: none; counter-reset: st; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; width: 100%; }
 .sp-hand-steps li { counter-increment: st; display: flex; align-items: center; gap: 12px; background: var(--card); border-radius: 20px; padding: 14px 16px; font-weight: 900; font-size: 22px; box-shadow: 0 4px 0 var(--shadow); }

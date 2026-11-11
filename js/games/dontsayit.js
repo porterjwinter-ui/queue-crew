@@ -47,9 +47,9 @@ const tut = {
   `,
   steps: [
     { c: 'Get your team to say it', t: 2200 },
-    { c: 'Never say these words', t: 2600 },
-    { c: 'They guess = +1', t: 2800 },
-    { c: 'Slip up? BLEEP!', t: 2800 },
+    { c: 'Don\'t say any of these words', t: 2600 },
+    { c: 'They guess it: 1 point', t: 2800 },
+    { c: 'Say one by mistake? BLEEP!', t: 2800 },
   ],
 };
 

@@ -37,7 +37,7 @@ const tut = {
     .tut-hotpotato[data-s="2"] .pot-body { fill: #ff5a3c; transition: fill 1.6s; }
     .tut-hotpotato[data-s="2"] .pot { animation: hpShake .12s .4s infinite; }
     @keyframes hpShake { 0% { transform: translate(142px, 0px) rotate(-8deg); } 50% { transform: translate(146px, -2px) rotate(8deg); } 100% { transform: translate(142px, 0px) rotate(-8deg); } }
-    .tut-hotpotato[data-s="2"] .heat { animation: tPop .4s .3s both, tBounce .3s .7s infinite alternate; }
+    .tut-hotpotato[data-s="2"] .heat { animation: tPop .4s .3s both; }
     .tut-hotpotato[data-s="3"] .pot { opacity: 0; }
     .tut-hotpotato[data-s="3"] .boom { animation: hpBoom .6s .1s both cubic-bezier(.3,1.6,.5,1); }
     @keyframes hpBoom { 0% { transform: scale(0) rotate(-30deg); } 100% { transform: scale(1) rotate(0deg); } }
@@ -46,9 +46,9 @@ const tut = {
   `,
   steps: [
     { c: 'Pass the phone around', t: 2600 },
-    { c: 'Say a word, then pass!', t: 2800 },
-    { c: 'It gets hotter…', t: 2400 },
-    { c: 'BOOM = a strike. 3 = out', t: 2600 },
+    { c: 'Say a word, then pass it', t: 2800 },
+    { c: 'It gets hotter and hotter', t: 2400 },
+    { c: 'Holding it at BOOM? That\'s a strike', t: 2600 },
   ],
 };
 
@@ -102,7 +102,6 @@ export default {
 
     function play(chunk) {
       const fuse = randInt(20, 50);
-      let lastPass = -10;
       let paused = false;
       let tickTimer = 0;
       let heat = 0;
@@ -149,7 +148,6 @@ export default {
       function pass() {
         if (paused || t.done) return;
         holder = nextIdx(holder);
-        lastPass = t.elapsed;
         sfx.whoosh(); buzz(25);
         potato.classList.remove('fly'); void potato.offsetWidth; potato.classList.add('fly');
         setWho(); newWord();
@@ -167,18 +165,15 @@ export default {
         sfx.boom(); buzz([300, 80, 300]);
         flash('#ff3b3b');
         const name = P[holder];
-        const midAir = t.elapsed - lastPass < 1;
-        if (!midAir) {
-          strikes[name] += 1;
-          if (strikes[name] >= 3) out.add(name);
-        }
+        strikes[name] += 1;
+        if (strikes[name] >= 3) out.add(name);
         mount(view({
           color: '#ff3b3b', back: ctx.quit, title: '',
           body: h('div', { class: 'hp-boom' },
-            h('div', { class: 'hp-boom-ico' }, ic(midAir ? 'mood-surprised' : 'boom')),
-            midAir ? h('div', { class: 'hp-boom-text' }, 'Mid-air! No strike') : nameTag(name),
-            midAir ? null : h('div', { class: 'hp-strikes' }, [0, 1, 2].map((k) => h('span', { class: k < strikes[name] ? 'on' : '' }, ic('circle-x')))),
-            out.has(name) && !midAir ? h('div', { class: 'hp-boom-text' }, 'Out!') : null),
+            h('div', { class: 'hp-boom-ico' }, ic('boom')),
+            nameTag(name),
+            h('div', { class: 'hp-strikes' }, [0, 1, 2].map((k) => h('span', { class: k < strikes[name] ? 'on' : '' }, ic('circle-x')))),
+            out.has(name) ? h('div', { class: 'hp-boom-text' }, 'Out!') : null),
           actions: [btn('Next', newRound, { icon: 'arrow-right' })],
         }));
       }

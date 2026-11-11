@@ -21,7 +21,7 @@ const tut = {
   css: `
     .tut-bingo .tap, .tut-bingo .bingo, .tut-bingo .balloon { transform: scale(0); }
     .tut-bingo[data-s="0"] .c0, .tut-bingo[data-s="0"] .c4, .tut-bingo[data-s="0"] .c8 { animation: tPop .4s both cubic-bezier(.3,1.6,.5,1); }
-    .tut-bingo[data-s="1"] .balloon { animation: tPop .4s .2s both cubic-bezier(.3,1.6,.5,1), tBounce .5s .6s infinite alternate; }
+    .tut-bingo[data-s="1"] .balloon { animation: tPop .4s .2s both cubic-bezier(.3,1.6,.5,1); }
     .tut-bingo[data-s="1"] .spy { animation: tShake .4s .3s 3; }
     .tut-bingo[data-s="2"] .tap { animation: bgTap 1.6s .2s ease-in-out both; }
     @keyframes bgTap { 0% { transform: scale(1) translate(0, 0); } 40% { transform: scale(1) translate(-12px, 14px); } 60% { transform: scale(.85) translate(-12px, 14px); } 100% { transform: scale(1) translate(-12px, 14px); } }

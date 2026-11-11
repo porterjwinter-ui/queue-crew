@@ -79,9 +79,11 @@ function requestBody(prompt, maxTokens) {
   return body;
 }
 
-async function ask(prompt, maxTokens = 3000) {
+async function ask(prompt, maxTokens = 3000, plain = false) {
   const key = getKey();
   if (!key) throw new AIError('Add your OpenRouter key first.');
+  const body = requestBody(prompt, maxTokens);
+  if (plain) { delete body.response_format; delete body.reasoning; body.max_tokens = maxTokens + 2000; }
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 90000);
   let res;
@@ -95,7 +97,7 @@ async function ask(prompt, maxTokens = 3000) {
         'HTTP-Referer': location.origin + location.pathname,
         'X-Title': 'Queue Crew',
       },
-      body: JSON.stringify(requestBody(prompt, maxTokens)),
+      body: JSON.stringify(body),
     });
   } catch (e) {
     throw new AIError(e.name === 'AbortError' ? 'That took too long. Try again.' : 'No connection. Try again with signal.');
@@ -105,20 +107,31 @@ async function ask(prompt, maxTokens = 3000) {
   let data = null;
   try { data = await res.json(); } catch { /* not JSON */ }
   if (!res.ok) {
+    // Some models refuse JSON mode or the thinking setting: ask once more without them.
+    if (res.status === 400 && !plain && (body.response_format || body.reasoning)) return ask(prompt, maxTokens, true);
     const known = { 401: "That key didn't work. Check it and try again.", 402: 'Your OpenRouter account is out of credits.', 429: 'Too many requests. Wait a minute and try again.' };
     throw new AIError(known[res.status] || (data && data.error && data.error.message) || `Something went wrong (${res.status}).`);
   }
-  const text = data && data.choices && data.choices[0] && data.choices[0].message ? String(data.choices[0].message.content || '') : '';
+  const choice = data && data.choices && data.choices[0];
+  const content = choice && choice.message ? choice.message.content : '';
+  // Content is usually a string, but some providers send a list of parts.
+  const text = Array.isArray(content) ? content.map((p) => (typeof p === 'string' ? p : p && p.text) || '').join('') : String(content || '');
   const s = text.indexOf('{'), e = text.lastIndexOf('}');
-  if (s < 0 || e < s) throw new AIError("The AI's reply couldn't be used. Try again.");
-  try { return JSON.parse(text.slice(s, e + 1)); } catch { throw new AIError("The AI's reply couldn't be used. Try again."); }
+  if (s < 0 || e < s) {
+    store.set('dev.lastReply', text.slice(0, 500));
+    throw new AIError(choice && choice.finish_reason === 'length' ? 'The AI ran out of room. Try again.' : "The AI didn't send anything usable back. Try again.");
+  }
+  try { return JSON.parse(text.slice(s, e + 1)); } catch {
+    store.set('dev.lastReply', text.slice(0, 500));
+    throw new AIError(choice && choice.finish_reason === 'length' ? 'The AI ran out of room. Try again.' : "The AI's reply was broken. Try again.");
+  }
 }
 
 // ---------- checks ----------
 const BLOCKED = /\b(damn|hell|crap|sexy|sex|kiss|kissing|kill|killed|killing|murder|dead|blood|bloody|gun|guns|knife|beer|wine|vodka|drunk|drug|drugs|cigarette|smoke|weed|stupid|idiot|dumb|hate|naked|butt|poop|fart|pee|vomit|barf)\b/i;
 function clean(v, max) {
   if (typeof v !== 'string') return null;
-  const t = v.replace(/\s+/g, ' ').trim();
+  const t = v.replace(/[\u2018\u2019\u02BC]/g, "'").replace(/[\u2013\u2014]/g, '-').replace(/\s+/g, ' ').trim();
   if (!t || t.length > max) return null;
   if (!/^[A-Za-z0-9 ,.'!?&()\-:]+$/.test(t)) return null; // plain characters only (no emoji, no markup)
   if (BLOCKED.test(t)) return null;
@@ -271,7 +284,7 @@ const DECK_ICONS = ['paw', 'pizza', 'building-carousel', 'wand', 'briefcase', 'r
 
 async function makeDeck(progress) {
   progress('Inventing a new deck…');
-  const { decks, allWords } = aiContext();
+  const { decks } = aiContext();
   const reply = await ask(`Invent a brand-new deck for a guessing game like Heads Up: one player holds the phone to their forehead and friends give clues for the word on it.
 Pick a fun, specific theme that is not one of these existing decks: ${decks.join(', ')}.
 Example themes: "Under the Sea", "Camping Trip", "At the Bakery", "Pirate Life", "Winter Fun".
@@ -279,41 +292,50 @@ Split it into 3 groups. Each group has 12 items: 4 easy, 5 medium and 3 hard. It
 Choose the best icon for the deck from this list: ${DECK_ICONS.join(', ')}.
 
 Reply as {"name":"Camping Trip","icon":"tent","groups":[{"name":"Camping Gear","singular":"piece of camping gear","easy":["tent"],"medium":["sleeping bag"],"hard":["compass"]}]}`, 3000);
-  const name = clean(reply && reply.name, 24);
-  if (!name || decks.some((d) => key(d) === key(name))) throw new AIError("The AI's deck couldn't be used. Try again.");
+  if (!reply || typeof reply !== 'object') throw new AIError("The AI didn't send a deck back. Try again.");
+  let name = clean(reply.name || reply.title || reply.theme, 30);
+  if (!name) throw new AIError("The AI's deck had no usable name. Try again.");
+  if (decks.some((d) => key(d) === key(name))) name = `${name} 2`;
   const id = 'ai-' + key(name).slice(0, 16) + '-' + Date.now().toString(36);
-  const seen = new Set(allWords.map(key));
+  const seen = new Set(); // no repeats inside this deck (sharing words with other decks is fine)
   const groups = [];
   (Array.isArray(reply.groups) ? reply.groups : []).slice(0, 4).forEach((g, i) => {
-    const n = clean(g && g.name, 30);
-    if (!n) return;
+    if (!g || typeof g !== 'object') return;
+    const n = clean(g.name || g.title, 30) || `${name} ${i + 1}`;
     const grp = { id: `${id}-${i}`, n, s: clean(g.singular, 30) || n.toLowerCase(), e: [], m: [], h: [] };
-    [['easy', 'e'], ['medium', 'm'], ['hard', 'h']].forEach(([from, to]) => {
+    // Usually easy / medium / hard lists; a single "items" or "words" list is treated as medium.
+    [['easy', 'e'], ['medium', 'm'], ['hard', 'h'], ['items', 'm'], ['words', 'm']].forEach(([from, to]) => {
       for (const v of (Array.isArray(g[from]) ? g[from] : [])) {
-        const w = clean(v, 30);
+        const w = clean(typeof v === 'string' ? v : v && (v.word || v.item), 30);
         if (!w || w.split(' ').length > 4 || seen.has(key(w))) continue;
         seen.add(key(w));
         grp[to].push(w);
       }
     });
-    if (grp.e.length + grp.m.length + grp.h.length >= 6) groups.push(grp);
+    if (grp.e.length + grp.m.length + grp.h.length >= 4) groups.push(grp);
   });
   const total = groups.reduce((t, g) => t + g.e.length + g.m.length + g.h.length, 0);
-  if (total < 20) throw new AIError("The AI's deck couldn't be used. Try again.");
+  if (total < 15) throw new AIError(`The AI's deck was too small (${total} words). Try again.`);
   const icon = DECK_ICONS.includes(reply.icon) ? reply.icon : 'sparkles';
   return { decks: [{ id, name, icon, groups }] };
 }
 
 // Make a new deck now, save it, and return its id (used by Forehead's "New deck" card).
 export async function newDeck(progress = () => {}) {
-  const part = await makeDeck(progress);
-  addExtras(part);
-  log(`New deck: ${part.decks[0].name}`);
-  return part.decks[0];
+  try {
+    const part = await makeDeck(progress);
+    addExtras(part);
+    log(`New deck: ${part.decks[0].name}`);
+    return part.decks[0];
+  } catch (e) {
+    log(`Deck failed: ${e.message}`);
+    throw e;
+  }
 }
 
 export const KINDS = [
   { id: 'all', label: 'Everything' },
+  { id: 'deck', label: 'New Forehead deck' },
   { id: 'words', label: 'Words for all games' },
   { id: 'taboo', label: "Don't Say It cards" },
   { id: 'questions', label: 'Majority Rules questions' },
@@ -325,10 +347,11 @@ const RUN = { words: (p) => makeWords(p), taboo: makeTaboo, questions: makeQuest
 // Runs the chosen generator(s), saves what passed the checks, and returns it.
 export async function generate(kind, progress = () => {}) {
   const order = kind === 'all' ? ['words', 'taboo', 'questions', 'scales', 'doodle'] : [kind];
-  const total = { words: [], taboo: {}, questions: [], spectrums: [], doodle: { adj: [], noun: [], act: [] } };
+  const total = { decks: [], words: [], taboo: {}, questions: [], spectrums: [], doodle: { adj: [], noun: [], act: [] } };
   for (const k of order) {
     const part = await RUN[k](progress);
     addExtras(part);
+    if (part.decks) { total.decks.push(...part.decks); part.decks.forEach((d) => log(`New deck: ${d.name}`)); }
     if (part.words) total.words.push(...part.words);
     if (part.taboo) Object.assign(total.taboo, part.taboo);
     if (part.questions) total.questions.push(...part.questions);

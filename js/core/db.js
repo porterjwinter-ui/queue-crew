@@ -28,7 +28,7 @@ function indexCategory(c) {
 
 const seenWords = new Set();
 function addWord(grp, w, d) {
-  const k = w.toLowerCase();
+  const k = `${grp.cat.id}|${w.toLowerCase()}`; // the same word may appear in different decks
   if (seenWords.has(k)) return false;
   seenWords.add(k);
   const e = { w, d, g: grp };

@@ -96,7 +96,7 @@ export default {
           d.isNew ? h('div', { class: 'deck-hint' }, 'Made by AI') : null,
           d.ai ? h('span', { class: 'deck-ai' }, ic('sparkles')) : null,
           d.act ? h('div', { class: 'deck-hint' }, ic(d.id === 'sounds' ? 'volume' : 'run'), d.id === 'sounds' ? 'sound it' : 'act it') : null,
-        ), (d) => (d.isNew ? makeDeck() : useDeck(d)), { start: devOn() ? 1 : 0 }),
+        ), (d) => (d.isNew ? makeDeck() : useDeck(d)), { start: 0 }),
       }));
     }
 

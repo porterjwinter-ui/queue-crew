@@ -4,7 +4,7 @@
 // and cards whenever they're about to repeat. With developer mode off, none of that is used.
 import { h, view, btn, mount, ic, confirmBox, enable, dropdown } from './core/ui.js';
 import { store } from './core/store.js';
-import { KINDS, getKey, setKey, getModelInfo, setModelInfo, cachedModels, loadModels, generate, getLog } from './core/ai.js';
+import { KINDS, getKey, setKey, getModelInfo, setModelInfo, cachedModels, loadModels, generate, getLog, log } from './core/ai.js';
 import { extraCounts, clearExtras } from './core/db.js';
 
 const COLOR = '#4b6584';
@@ -58,6 +58,7 @@ export function devMenu(home) {
     try {
       const r = await generate(kind.value(), (msg) => { status.textContent = msg; });
       const items = [
+        ...r.decks.map((d) => `Deck: ${d.name}`),
         ...r.words.map((w) => w[1]),
         ...Object.keys(r.taboo),
         ...r.questions,
@@ -69,6 +70,7 @@ export function devMenu(home) {
         items.length > 30 ? h('span', { class: 'chip skip' }, `+${items.length - 30} more`) : null);
     } catch (e) {
       status.textContent = e.message || 'Something went wrong.';
+      log(`Failed: ${status.textContent}`);
     } finally {
       enable(gen, true);
       showCounts();

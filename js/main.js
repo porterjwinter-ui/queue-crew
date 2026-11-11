@@ -1,5 +1,5 @@
 // Queue Crew — app shell: home carousel, how-to-play intros, players, scoreboard.
-import { h, view, btn, mount, initUI, avatar, confirmBox, themeVars, enable, onCleanup, ic, stars, toast, overlay, closeOverlay } from './core/ui.js';
+import { h, view, btn, mount, initUI, avatar, confirmBox, themeVars, enable, onCleanup, ic, stars, toast, overlay, closeOverlay, gameFullscreen } from './core/ui.js';
 import { loadDB } from './core/db.js';
 import { unlockAudio, sfx, soundOn, setSound } from './core/sound.js';
 import { store, getPlayers, setPlayers, getLevel, setLevel, getTickets, resetTickets, devOn } from './core/store.js';
@@ -54,6 +54,7 @@ async function install() {
 
 // ---------- Home ----------
 function home() {
+  gameFullscreen(false); // leaving a game always returns to the normal browser view
   const start = Math.max(0, GAMES.findIndex((g) => g.id === store.get('lastGame', GAMES[0].id)));
   let current = start;
   const sound = h('button', { class: 'iconbtn', 'aria-label': 'Sound', onclick: () => { setSound(!soundOn()); sound.replaceChildren(ic(soundOn() ? 'volume' : 'volume-off')); sfx.tap(); } }, ic(soundOn() ? 'volume' : 'volume-off'));
@@ -85,7 +86,7 @@ function home() {
     lastTap = now;
     if (taps >= 7) { taps = 0; devMenu(home); }
     else if (taps >= 4) toast(`${7 - taps} more`);
-  } }, h('span', { class: 'logo-q' }, 'Q'), 'ueue Crew', devOn() ? h('span', { class: 'dev-badge' }, 'DEV') : null);
+  } }, h('span', { class: `logo-q ${devOn() ? 'is-dev' : ''}`, title: devOn() ? 'Developer mode is on' : null }, 'Q'), 'ueue Crew');
   const v = view({
     color: APP_COLOR, left: sound,
     right: h('div', { class: 'bar-right' },

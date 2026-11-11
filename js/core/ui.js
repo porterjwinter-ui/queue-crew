@@ -220,6 +220,24 @@ export function dropdown({ label, panel, onOpen, cls = '' }) {
   return { el: wrap, close, setLabel };
 }
 
+// Forehead goes full screen and sideways while playing, which hides the browser's bars.
+// Works on Android and desktop browsers; iPhone doesn't allow it (installing the app removes the bars there).
+// Must be called inside a tap.
+export function gameFullscreen(on) {
+  try {
+    const d = document;
+    if (on) {
+      if (d.fullscreenElement || !d.documentElement.requestFullscreen) return;
+      d.documentElement.requestFullscreen({ navigationUI: 'hide' })
+        .then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape'))
+        .catch(() => { /* not allowed here: the safe-area layout still keeps the game clear of the bars */ });
+    } else if (d.fullscreenElement && d.exitFullscreen) {
+      try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch { /* ignore */ }
+      d.exitFullscreen().catch(() => {});
+    }
+  } catch { /* ignore */ }
+}
+
 // Small message at the bottom of the screen.
 export function toast(text, ms = 1400) {
   document.querySelectorAll('.toast').forEach((t) => t.remove());

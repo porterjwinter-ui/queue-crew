@@ -1,5 +1,5 @@
 // Forehead: phone on your head, friends give clues, nod down = got it, tilt up = skip.
-import { h, view, btn, mount, fitText, pauseMenu, keepAwake, onCleanup, setBack, sleep, closeOverlay, ic } from '../core/ui.js';
+import { h, view, btn, mount, fitText, pauseMenu, keepAwake, onCleanup, setBack, sleep, closeOverlay, ic, gameFullscreen } from '../core/ui.js';
 import { decks, deckStream } from '../core/db.js';
 import { devOn } from '../core/store.js';
 import { newDeck } from '../core/ai.js';
@@ -126,8 +126,10 @@ export default {
       if (turn >= ctx.players.length) return results(ctx, scores);
       const name = ctx.players[turn];
       passTo(ctx, name, () => {
-        // Must be called directly inside the tap so iPhone shows its motion prompt.
-        requestMotion().then((ok) => placeOnHead(name, ok));
+        // Both must be called directly inside the tap: iPhone's motion prompt, and full screen on Android.
+        const motion = requestMotion();
+        gameFullscreen(true);
+        motion.then((ok) => placeOnHead(name, ok));
       }, { label: 'Ready', icon: 'device-mobile-rotated' });
     }
 
@@ -184,15 +186,27 @@ export default {
       const left = h('div', { class: 'fh-zone left', onclick: () => answer(false) }, h('span', null, ic('arrow-forward-up')));
       const right = h('div', { class: 'fh-zone right', onclick: () => answer(true) }, h('span', null, ic('check')));
       const stage = h('div', { class: 'fh-stage' }, left, right, h('div', { class: 'fh-top' }, timeEl, hintEl), wordBox, scoreEl, fb, pauseBtn);
-      const scr = h('section', { class: 'fh-play' }, stage);
+      // .fh-safe marks the part of the screen not covered by the notch or the browser's bars.
+      const safe = h('div', { class: 'fh-safe' });
+      const scr = h('section', { class: 'fh-play' }, safe, stage);
       scr.style.setProperty('--c', ctx.color);
       setBack(() => doPause());
       mount(scr);
       keepAwake.want = true; keepAwake(true);
-      onCleanup(() => { keepAwake.want = false; keepAwake(false); });
+      onCleanup(() => { keepAwake.want = false; keepAwake(false); gameFullscreen(false); });
 
+      // Fit the game inside the visible, unobstructed area (safe area AND the visual viewport).
       const layout = () => {
-        const W = window.innerWidth, H = window.innerHeight;
+        const r = safe.getBoundingClientRect();
+        let L = r.left, T = r.top, R = r.right, B = r.bottom;
+        const vv = window.visualViewport;
+        if (vv) {
+          L = Math.max(L, vv.offsetLeft); T = Math.max(T, vv.offsetTop);
+          R = Math.min(R, vv.offsetLeft + vv.width); B = Math.min(B, vv.offsetTop + vv.height);
+        }
+        const W = Math.max(100, R - L), H = Math.max(100, B - T);
+        stage.style.left = `${L + W / 2}px`;
+        stage.style.top = `${T + H / 2}px`;
         const side = rot === 90 || rot === -90;
         stage.style.width = (side ? H : W) + 'px';
         stage.style.height = (side ? W : H) + 'px';
@@ -201,7 +215,11 @@ export default {
       };
       const fitWord = () => fitText(wordEl, Math.min(stage.offsetHeight * 0.34, 150), 22);
       window.addEventListener('resize', layout);
-      onCleanup(() => window.removeEventListener('resize', layout));
+      if (window.visualViewport) window.visualViewport.addEventListener('resize', layout);
+      onCleanup(() => {
+        window.removeEventListener('resize', layout);
+        if (window.visualViewport) window.visualViewport.removeEventListener('resize', layout);
+      });
 
       const u0 = getUp();
       if (sensor && u0) { const r = screenFix(u0); if (r != null) rot = r; }

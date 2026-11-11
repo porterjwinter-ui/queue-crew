@@ -12,7 +12,7 @@ Party games for waiting in line, made for phones.
 |------|------|---------|
 | **Forehead** | Heads Up — phone on your forehead, nod = got it, tilt up = skip | 2+ |
 | **Imposter** | Odd One Out / The Chameleon — Classic (imposter knows) or Sneaky (imposter gets a different word). Caught: everyone else +1. Escaped: imposter +2 | 3+ |
-| **Hot Potato** | Catch Phrase + Pass the Bomb — Describe words or say words with letters, hidden fuse | 2+ |
+| **Hot Potato** | Catch Phrase + Pass the Bomb — hidden fuse; holding it at BOOM is a strike, 3 strikes and you're out. Describe mode: tap whoever guessed it. The guesser is safe and the phone goes to someone who didn't guess, picked by a secret draw that favors the best guessers | 2+ |
 | **Don't Say It** | Taboo — 4+ players play in teams, fewer play together | 2+ |
 | **Majority Rules** | Herd Mentality — match the most popular answer for 1 point; first to 5 wins | 3+ |
 | **Jinx** | Just One — everyone on one team, matching clues cancel out automatically; 8 cards | 3+ |

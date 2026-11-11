@@ -190,6 +190,11 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
 .av-m { width: 52px; height: 52px; font-size: 24px; }
 .av-xl { width: 140px; height: 140px; font-size: 64px; box-shadow: 0 8px 0 rgba(0, 0, 0, .15); }
 .ss-badge { position: absolute; right: -8px; top: -10px; font-size: 18px; font-style: normal; }
+/* Out of the game: a thick red X across the player's face. */
+.av.out::before, .av.out::after { content: ''; position: absolute; left: -12%; right: -12%; top: 50%; height: 16%; margin-top: -8%; border-radius: 99px; background: #ff3b3b; box-shadow: 0 0 0 2px #fff; z-index: 1; }
+.av.out::before { transform: rotate(45deg); }
+.av.out::after { transform: rotate(-45deg); }
+.ss-item.is-out b, .res-row .av.out + span { opacity: .45; }
 .nametag { display: inline-flex; align-items: center; gap: 8px; font-weight: 900; font-size: 22px; min-width: 0; }
 .nametag > span:not(.av) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -349,7 +354,12 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: non
 .hp-reveal:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--c2); }
 .hp-passto { font-weight: 800; opacity: .6; margin-right: 8px; }
 .hp-who { display: flex; align-items: center; justify-content: center; }
-.hp-play.passing .hp-todo { visibility: hidden; }
+.hp-play.passing .hp-todo, .hp-play.passing .hp-got { visibility: hidden; }
+.hp-got { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 6px; }
+.hp-got-label { font-weight: 900; font-size: 18px; opacity: .6; }
+.hp-got-avs { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.hp-got-btn { border: 0; background: var(--card); border-radius: 18px; padding: 8px 12px 8px 8px; display: inline-flex; align-items: center; gap: 8px; font-weight: 900; font-size: 18px; box-shadow: 0 4px 0 var(--shadow); }
+.hp-got-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--shadow); }
 .hp-play.passing .actions { visibility: hidden; } /* no Skip / Got it until the new holder has it */
 .hp-first { display: flex; align-items: center; gap: 6px; font-weight: 900; font-size: 22px; }
 .chunk { display: flex; align-items: baseline; justify-content: center; gap: 4px; font-weight: 900; font-size: 64px; flex-wrap: wrap; }

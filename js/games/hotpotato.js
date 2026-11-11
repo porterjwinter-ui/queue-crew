@@ -1,10 +1,10 @@
 // Hot Potato: say a word, pass the phone. A hidden fuse goes off — whoever holds it gets a strike.
-import { h, view, btn, mount, nameTag, pauseMenu, setBack, keepAwake, onCleanup, closeOverlay, flash, ic } from '../core/ui.js';
+import { h, view, btn, mount, nameTag, avatar, pauseMenu, setBack, keepAwake, onCleanup, closeOverlay, flash, ic } from '../core/ui.js';
 import { hotWordStream, letterChunk } from '../core/db.js';
-import { randInt } from '../core/rng.js';
+import { randInt, rand } from '../core/rng.js';
 import { timer, onHidden } from '../core/timer.js';
 import { sfx, buzz } from '../core/sound.js';
-import { results, scoreStrip } from '../core/flow.js';
+import { results, scoreStrip, crossOut } from '../core/flow.js';
 import { art } from '../core/tutorial.js';
 
 const X = [52, 124, 196, 268];
@@ -18,39 +18,51 @@ const tut = {
   svg: `
     ${X.map((x, i) => art.person('p' + i, x, 128, ['#3867d6', '#20bf6b', '#8854d0', '#e84393'][i], { scale: 0.78 })).join('')}
     ${art.at(52, 120, potatoSvg('pot'))}
-    ${art.bubble('say1', 52, 64, 'Banana!', { w: 78, fs: 14 })}
-    ${art.bubble('say2', 124, 64, 'Bagel!', { w: 70, fs: 14 })}
-    ${art.icon('heat', 196, 70, 'flame', { size: 34, color: '#ff5a1f' })}
-    ${art.icon('boom', 196, 112, 'boom', { size: 64, color: '#fff', bg: '#ff3b1f' })}
-    ${art.cross('x', 196, 62, 18)}
+    ${art.bubble('say0', 66, 62, 'Yellow fruit...', { w: 112, fs: 12 })}
+    ${art.bubble('say2', 196, 62, 'Banana!', { w: 78, fs: 14 })}
+    ${art.icon('safe', 196, 26, 'shield-check', { size: 26, color: '#fff', bg: '#20bf6b' })}
+    ${art.icon('heat', 268, 70, 'flame', { size: 34, color: '#ff5a1f' })}
+    ${art.icon('boom', 268, 112, 'boom', { size: 60, color: '#fff', bg: '#ff3b1f' })}
+    ${art.cross('x', 268, 62, 18)}
   `,
   css: `
-    .tut-hotpotato .say1, .tut-hotpotato .say2, .tut-hotpotato .heat, .tut-hotpotato .boom, .tut-hotpotato .x { transform: scale(0); }
-    .tut-hotpotato[data-s="0"] .pot { animation: hpHop1 2.2s .2s ease-in-out both; }
-    @keyframes hpHop1 { 0% { transform: none; } 35% { transform: translate(36px, -34px); } 50%,100% { transform: translate(72px, 0px); } }
-    .tut-hotpotato[data-s="1"] .pot { animation: hpHop2 2.4s .1s ease-in-out both; }
-    @keyframes hpHop2 { 0%,45% { transform: none; } 70% { transform: translate(36px, -34px); } 85%,100% { transform: translate(72px, 0px); } }
-    .tut-hotpotato[data-s="1"] .say1 { animation: tPop .35s .1s both cubic-bezier(.3,1.6,.5,1); }
-    .tut-hotpotato[data-s="1"] .say2 { animation: tPop .35s 1.6s both cubic-bezier(.3,1.6,.5,1); }
-    .tut-hotpotato[data-s="1"] .p0 { transform: translate(0px, 0px); }
-    .tut-hotpotato[data-s="2"] .pot, .tut-hotpotato[data-s="3"] .pot { transform: translate(144px, 0px); }
-    .tut-hotpotato[data-s="2"] .pot-body { fill: #ff5a3c; transition: fill 1.6s; }
-    .tut-hotpotato[data-s="2"] .pot { animation: hpShake .12s .4s infinite; }
-    @keyframes hpShake { 0% { transform: translate(142px, 0px) rotate(-8deg); } 50% { transform: translate(146px, -2px) rotate(8deg); } 100% { transform: translate(142px, 0px) rotate(-8deg); } }
-    .tut-hotpotato[data-s="2"] .heat { animation: tPop .4s .3s both; }
-    .tut-hotpotato[data-s="3"] .pot { opacity: 0; }
-    .tut-hotpotato[data-s="3"] .boom { animation: hpBoom .6s .1s both cubic-bezier(.3,1.6,.5,1); }
+    .tut-hotpotato .say0, .tut-hotpotato .say2, .tut-hotpotato .safe, .tut-hotpotato .heat, .tut-hotpotato .boom, .tut-hotpotato .x { transform: scale(0); }
+    .tut-hotpotato[data-s="0"] .say0 { animation: tPop .35s .3s both cubic-bezier(.3,1.6,.5,1); }
+    .tut-hotpotato[data-s="1"] .say2 { animation: tPop .35s .2s both cubic-bezier(.3,1.6,.5,1); }
+    .tut-hotpotato[data-s="1"] .safe, .tut-hotpotato[data-s="2"] .safe { animation: tPop .4s .8s both cubic-bezier(.3,1.6,.5,1); }
+    .tut-hotpotato[data-s="2"] .safe { animation-delay: 0s; }
+    /* the potato skips the guesser and lands on someone who didn't guess */
+    .tut-hotpotato[data-s="2"] .pot { animation: hpSkip 1.6s .3s ease-in-out both; }
+    @keyframes hpSkip { 0% { transform: none; } 50% { transform: translate(108px, -60px); } 100% { transform: translate(216px, 0px); } }
+    .tut-hotpotato[data-s="3"] .pot, .tut-hotpotato[data-s="4"] .pot { transform: translate(216px, 0px); }
+    .tut-hotpotato[data-s="3"] .pot-body { fill: #ff5a3c; transition: fill 1.6s; }
+    .tut-hotpotato[data-s="3"] .pot { animation: hpShake .12s .4s infinite; }
+    @keyframes hpShake { 0% { transform: translate(214px, 0px) rotate(-8deg); } 50% { transform: translate(218px, -2px) rotate(8deg); } 100% { transform: translate(214px, 0px) rotate(-8deg); } }
+    .tut-hotpotato[data-s="3"] .heat { animation: tPop .4s .3s both; }
+    .tut-hotpotato[data-s="4"] .pot { opacity: 0; }
+    .tut-hotpotato[data-s="4"] .boom { animation: hpBoom .6s .1s both cubic-bezier(.3,1.6,.5,1); }
     @keyframes hpBoom { 0% { transform: scale(0) rotate(-30deg); } 100% { transform: scale(1) rotate(0deg); } }
-    .tut-hotpotato[data-s="3"] .x { animation: tPop .4s .7s both cubic-bezier(.3,1.6,.5,1); }
-    .tut-hotpotato[data-s="3"] .p2 { animation: tShake .35s .3s 3; }
+    .tut-hotpotato[data-s="4"] .x { animation: tPop .4s .7s both cubic-bezier(.3,1.6,.5,1); }
+    .tut-hotpotato[data-s="4"] .p3 { animation: tShake .35s .3s 3; }
   `,
   steps: [
-    { c: 'Pass the phone around', t: 2600 },
-    { c: 'Your turn done? Pass it on', t: 2800 },
-    { c: 'It gets hotter and hotter', t: 2400 },
+    { c: 'Describe the word on the phone', t: 2400 },
+    { c: 'Guess it right and you\'re safe', t: 2600 },
+    { c: 'It goes to someone who didn\'t guess', t: 2600 },
+    { c: 'It gets hotter and hotter', t: 2200 },
     { c: 'Holding it at BOOM? That\'s a strike', t: 2600 },
   ],
 };
+
+// Weighted draw for the next holder: each candidate's weight is everyone else's points
+// (never below 1), so more correct guesses = less likely to be handed the potato.
+export function pickHolder(cands, points, rnd = rand) {
+  const total = cands.reduce((n, c) => n + points[c], 0);
+  const weights = cands.map((c) => Math.max(total - points[c], 1));
+  let r = rnd() * weights.reduce((a, b) => a + b, 0);
+  for (let k = 0; k < cands.length; k++) { r -= weights[k]; if (r < 0) return cands[k]; }
+  return cands[cands.length - 1];
+}
 
 function mix(a, b, f) {
   const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
@@ -74,19 +86,28 @@ export default {
     let round = 0;
     const alive = () => P.filter((p) => !out.has(p));
     const nextIdx = (i) => { do { i = (i + 1) % P.length; } while (out.has(P[i])); return i; };
+
+    // Secret guess points: every correct guess earns one. Who gets the potato next is a random
+    // draw where more points = smaller chance. With two people at 3 and 1 points, the 3-point
+    // player is handed it 1 time in 4 and the 1-point player 3 times in 4. Nobody's chance is zero.
+    const guesses = Object.fromEntries(P.map((p) => [p, 0]));
+    const drawNext = (exclude = new Set()) => {
+      const cands = P.filter((p, i) => i !== holder && !exclude.has(p) && !out.has(p));
+      return cands.length ? P.indexOf(pickHolder(cands, guesses)) : null;
+    };
     newRound();
 
     function newRound() {
-      if (alive().length <= 1) return results(ctx, strikes, { lowWins: true, note: 'Fewest strikes wins' });
+      if (alive().length <= 1) return results(ctx, strikes, { lowWins: true, note: 'Last one standing wins', crossed: out });
       round += 1;
-      if (round > 1 || out.has(P[holder])) holder = nextIdx(holder);
+      if (round > 1 || out.has(P[holder])) { const d = drawNext(); holder = d === null ? nextIdx(holder) : d; }
       const chunk = letters ? letterChunk(ctx.level) : null;
       mount(view({
         color: ctx.color, back: ctx.quit, title: `Round ${round}`,
         body: h('div', { class: 'hp-intro' },
           chunk ? chunkView(chunk) : h('div', { class: 'hp-big-ico' }, ic('flame')),
           h('div', { class: 'hp-first' }, nameTag(P[holder]), h('span', null, ' starts')),
-          scoreStrip(strikes, Object.fromEntries([...out].map((p) => [p, 'x'])))),
+          scoreStrip(strikes, {}, out)),
         actions: [btn(`I'm ${P[holder]}`, () => play(chunk), { icon: 'flame' })],
       }));
     }
@@ -128,18 +149,34 @@ export default {
             sfx.tap(); buzz(10);
             covered = false;
             scr.classList.remove('passing');
-            setWho(); newWord();
+            setWho(); newWord(); renderGot();
             slot.replaceChildren(word);
           },
         }, ic('hand-stop'), h('span', null, `I'm ${name}`)));
       };
 
-      const passBtn = btn(letters ? 'Said one!' : 'Got it', () => pass(), { icon: 'check', silent: true });
+      // Describe mode: tap whoever guessed it. They're safe; the phone goes to someone who didn't guess.
+      const gotRow = h('div', { class: 'hp-got' });
+      const renderGot = () => {
+        if (letters) return;
+        gotRow.replaceChildren(h('div', { class: 'hp-got-label' }, 'Who got it?'),
+          h('div', { class: 'hp-got-avs' }, P.filter((p, i) => i !== holder && !out.has(p)).map((name) =>
+            h('button', { class: 'hp-got-btn', type: 'button', onclick: () => guessed(name) }, avatar(name, 'm'), h('span', null, name)))));
+      };
+      const guessed = (name) => {
+        if (paused || covered || t.done) return;
+        sfx.good(); buzz(30);
+        guesses[name] += 1;
+        const next = drawNext(new Set([name])); // the guesser is safe this time
+        pass(next === null ? P.indexOf(name) : next); // only 2 players left: nobody else to give it to
+      };
+
+      const passBtn = letters ? btn('Said one!', () => pass(nextIdx(holder)), { icon: 'check', silent: true }) : null;
       const skipBtn = letters ? null : btn('Skip', () => { if (!covered) { newWord(); sfx.pass(); } }, { kind: 'ghost', icon: 'arrow-forward-up' });
 
       const scr = view({
         color: ctx.color, cls: 'hp-play',
-        body: h('div', { class: 'hp-stage' }, potato, who, todo, letters ? chunkView(chunk) : slot),
+        body: h('div', { class: 'hp-stage' }, potato, who, todo, letters ? chunkView(chunk) : slot, letters ? null : gotRow),
         actions: [skipBtn, passBtn],
       });
       setBack(() => doPause());
@@ -147,7 +184,7 @@ export default {
       potato.addEventListener('click', () => doPause());
       keepAwake.want = true; keepAwake(true);
       onCleanup(() => { keepAwake.want = false; keepAwake(false); clearTimeout(tickTimer); });
-      setWho(); newWord();
+      setWho(); newWord(); renderGot();
       const body = potato.querySelector('.hp-body');
 
       const t = timer(fuse, {
@@ -172,9 +209,9 @@ export default {
       };
       tick();
 
-      function pass() {
+      function pass(to) {
         if (paused || covered || t.done) return;
-        holder = nextIdx(holder);
+        holder = to;
         sfx.whoosh(); buzz(25);
         potato.classList.remove('fly'); void potato.offsetWidth; potato.classList.add('fly');
         if (letters) { setWho(); return; } // the letters are the same for everyone, nothing to hide
@@ -199,7 +236,7 @@ export default {
           color: '#ff3b3b', back: ctx.quit, title: '',
           body: h('div', { class: 'hp-boom' },
             h('div', { class: 'hp-boom-ico' }, ic('boom')),
-            nameTag(name),
+            crossOut(nameTag(name), out.has(name)),
             h('div', { class: 'hp-strikes' }, [0, 1, 2].map((k) => h('span', { class: k < strikes[name] ? 'on' : '' }, ic('circle-x')))),
             out.has(name) ? h('div', { class: 'hp-boom-text' }, 'Out!') : null),
           actions: [btn('Next', newRound, { icon: 'arrow-right' })],

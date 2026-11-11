@@ -62,7 +62,7 @@ export function carousel(items, render, onPick, { start = 0, onChange } = {}) {
 
 // Final standings + tickets. scores = {name: points}.
 // cantWin: a player who may not take first place (Majority Rules' duck holder).
-export function results(ctx, scores, { lowWins = false, note, cantWin } = {}) {
+export function results(ctx, scores, { lowWins = false, note, cantWin, crossed = new Set() } = {}) {
   const eff = Object.fromEntries(Object.entries(scores).map(([n, s]) => [n, lowWins ? -s : s]));
   if (cantWin && cantWin in eff) {
     const others = Object.entries(eff).filter(([n]) => n !== cantWin).map(([, v]) => v);
@@ -76,7 +76,7 @@ export function results(ctx, scores, { lowWins = false, note, cantWin } = {}) {
     if (eff[name] !== last) { rank = i; last = eff[name]; }
     return h('div', { class: `res-row ${rank === 0 ? 'win' : ''}` },
       h('span', { class: 'res-medal' }, medal(rank)),
-      nameTag(name),
+      crossOut(nameTag(name), crossed.has(name)),
       h('span', { class: 'res-score' }, String(scores[name])),
       tix(awards[name]));
   });
@@ -141,9 +141,18 @@ export function teamBadge(t, score) {
 }
 
 // Small row of avatars with points.
-export function scoreStrip(scores, extra = {}) {
+// crossed: players who are out get a big red X across their face.
+export function scoreStrip(scores, extra = {}, crossed = new Set()) {
   return h('div', { class: 'score-strip' }, Object.entries(scores).map(([n, s]) =>
-    h('span', { class: 'ss-item' }, avatar(n, 's', extra[n] ? h('i', { class: 'ss-badge' }, ic(extra[n])) : null), h('b', null, String(s)))));
+    h('span', { class: `ss-item ${crossed.has(n) ? 'is-out' : ''}` },
+      crossOut(avatar(n, 's', extra[n] ? h('i', { class: 'ss-badge' }, ic(extra[n])) : null), crossed.has(n)),
+      h('b', null, String(s)))));
+}
+
+// Puts a red X across an avatar (or the avatar inside a name tag).
+export function crossOut(el, yes = true) {
+  if (yes) (el.classList.contains('av') ? el : el.querySelector('.av')).classList.add('out');
+  return el;
 }
 
 export { setBack };

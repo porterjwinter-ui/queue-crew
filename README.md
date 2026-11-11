@@ -1,6 +1,10 @@
 # Queue Crew
 
-Party games for waiting in line, made for phones. Open it in any phone browser, add it to the home screen, and it works offline after the first load. Nothing needs to be installed or run on the phone.
+## ▶️ Play: **[porterjwinter-ui.github.io/queue-crew](https://porterjwinter-ui.github.io/queue-crew/)**
+
+Open that link on your phone. To keep it like an app, tap **Share → Add to Home Screen** (iPhone) or **⋮ → Add to Home screen** (Android). After the first visit it works with no signal. Nothing needs to be installed or run on the phone.
+
+Party games for waiting in line, made for phones.
 
 ## The games
 
